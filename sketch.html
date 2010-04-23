@@ -1,0 +1,352 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+        <title>Go-LatLon.org</title>
+        <meta name="generator" content="Amaya, see http://www.w3.org/Amaya/" />
+        
+        <link rel="stylesheet" href="../theme/default/style.css" type="text/css" />
+        <link rel="stylesheet" href="style.css" type="text/css" />
+        <!-- script src="/js/prototype.js" type="text/javascript"></script -->
+        <script src="http://www.openlayers.org/api/OpenLayers.js" type="text/javascript"></script>
+        <script src="lib.js" type="text/javascript"></script>
+        <script type="text/javascript" src="http://osm.cdauth.eu/map/openstreetbugs.js"></script>
+
+        <script type="text/javascript">
+  // <![CDATA[
+  var lon = 5;
+  var lat = 40;
+  var zoom = 5;
+  var map, wkt;
+  var mapnik, yasat, yhsat, gshtab, road, bel, vector, pt, irs; /* layer holders */
+  var mapkers;
+  var uo; /* user logged in */
+        
+  OpenLayers.IMAGE_RELOAD_ATTEMPTS = 3;
+  OpenLayers.Util.onImageLoadErrorColor = "transparent";
+
+  function init(){
+    updateSignIn();
+
+    OpenLayers.Control.Permalink.prototype.updateLink = function() {
+        var href = this.base;
+        if (href.indexOf('?') != -1) {
+          href = href.substring( 0, href.indexOf('?') );
+        }
+ 
+        href += '?' + OpenLayers.Util.getParameterString(this.createParams()) + this.hash;
+        this.element.href = href;
+    }
+
+    /**
+     * Method: update
+     * Update the size of the bars, and the labels they contain.
+     */
+    OpenLayers.Control.ScaleLine.prototype.update = function() {
+        var res = this.map.getResolution();
+        if (!res) {
+            return;
+        }
+
+        var curMapUnits = this.map.getUnits();
+        var inches = OpenLayers.INCHES_PER_UNIT;
+        // scale maxSizeData by cos(lat) if possible
+
+        var center = this.map.getCenter();
+        if (center && this.displayProjection && this.displayProjection.projCode == "EPSG:4326") {
+          var lat = center.lat;
+          var lon = center.lon;
+
+          var mapPosition = OpenLayers.Projection.transform(
+            { x: lon, y: lat },
+            this.map.getProjectionObject(),
+            this.displayProjection
+          );
+
+          lon = mapPosition.x;
+          lat = mapPosition.y;
+
+          coslat = Math.cos(lat * Math.PI / 180.0);
+
+          // clamp coslat to stop the resolution getting too small near the poles
+          if (coslat < 0.01) {
+            coslat = 0.01;
+          }
+
+          res *= coslat;
+        }
+
+        // convert maxWidth to map units
+        var maxSizeData = this.maxWidth * res * inches[curMapUnits];
+
+        // decide whether to use large or small scale units
+        var topUnits;
+        var bottomUnits;
+        if(maxSizeData > 100000) {
+            topUnits = this.topOutUnits;
+            bottomUnits = this.bottomOutUnits;
+        } else {
+            topUnits = this.topInUnits;
+            bottomUnits = this.bottomInUnits;
+        }
+
+        // and to map units units
+        var topMax = maxSizeData / inches[topUnits];
+        var bottomMax = maxSizeData / inches[bottomUnits];
+
+        // now trim this down to useful block length
+        var topRounded = this.getBarLen(topMax);
+        var bottomRounded = this.getBarLen(bottomMax);
+
+        // and back to display units
+        topMax = topRounded / inches[curMapUnits] * inches[topUnits];
+        bottomMax = bottomRounded / inches[curMapUnits] * inches[bottomUnits];
+
+        // and to pixel units
+        var topPx = topMax / res;
+        var bottomPx = bottomMax / res;
+
+        // now set the pixel widths
+        // and the values inside them
+
+        if (this.eBottom.style.visibility == "visible"){
+            this.eBottom.style.width = Math.round(bottomPx) + "px";
+            this.eBottom.innerHTML = bottomRounded + " " + bottomUnits ;
+        }
+
+        if (this.eTop.style.visibility == "visible"){
+            this.eTop.style.width = Math.round(topPx) + "px";
+            this.eTop.innerHTML = topRounded + " " + topUnits;
+        }
+
+    };
+
+    var options = {
+        projection: new OpenLayers.Projection("EPSG:900913"),
+        displayProjection: new OpenLayers.Projection("EPSG:4326"),
+        units: "m",
+        numZoomLevels: 18,
+        maxResolution: 156543.0339,
+        maxExtent: new OpenLayers.Bounds(-20037508, -20037508,
+                                         20037508, 20037508.34),
+        controls: [
+          new OpenLayers.Control.MouseDefaults(), 
+          new OpenLayers.Control.PanZoomBar(), 
+          new OpenLayers.Control.ScaleLine(), 
+          new OpenLayers.Control.MousePosition(), 
+          new OpenLayers.Control.Permalink(null, null, {"hash": document.location.hash}),
+          new OpenLayers.Control.Permalink('edit', 'http://openstreetmap.org/edit', {"hash": ""}),
+          new OpenLayers.Control.Permalink('mini', 'http://go.latlon.org/', {"hash": "#mini"}),
+          new OpenLayers.Control.Permalink('maxi', 'http://go.latlon.org/', {"hash": "#maxi"}),
+          new OpenLayers.Control.Permalink('transport', 'http://go.latlon.org/', {"hash": "#transport"}),
+          new OpenLayers.Control.Permalink('tracks', 'http://go.latlon.org/', {"hash": "#tracks"}),
+          //new OpenLayers.Control.Permalink('sketch', 'http://go.latlon.org/', {"hash": "#sketch"}),
+        ]
+
+    };
+
+    map = new OpenLayers.Map('map', options);
+
+    switch (document.location.hash) {
+        case "#sketch":
+        case "#maxi": {
+            maxi();
+            maxiadd();
+            sketch();
+            sketchadd();
+            // document.location.hash = "#maxi";
+        } break;
+        /*
+        case "#transport":
+        case "":
+        case "#mini":
+        */
+        case "#osb": {
+            mini();
+            miniadd();
+            sketch();
+            sketchadd();
+            var osbLayer = new OpenLayers.Layer.OpenStreetBugs("OpenStreetBugs");
+            map.addLayer(osbLayer); // map is your instance of OpenLayers.Map
+        } break;
+        default: {
+            mini();
+            miniadd();
+            sketch();
+            sketchadd();
+            // document.location.hash = "#mini";
+        } break;
+    }
+
+    if (document.location.hash == "#tracks") {
+        //gpx()
+    }
+
+    mapkers = new OpenLayers.Layer.Markers("Mapkers");
+    map.addLayer(mapkers);
+    var size = new OpenLayers.Size(22,41);
+    var icon = new OpenLayers.Icon('/images/mapker-green.png',size,new OpenLayers.Pixel(-(size.w/2), -size.h));
+
+    var ls = new OpenLayers.Control.LayerSwitcher();
+    map.addControl(ls);
+    ls.maximizeControl();
+
+    if (1) { //document.location.hash == "#maxi") {
+        wkt = new OpenLayers.Format.WKT(
+            {
+              'internalProjection': new OpenLayers.Projection("EPSG:900913"),
+              'externalProjection': new OpenLayers.Projection("EPSG:4326")
+            }
+        );
+
+        var sketchSymbolizers = {
+            "Point": {
+              pointRadius: 4,
+              graphicName: "square",
+              fillColor: "white",
+              fillOpacity: 1,
+              strokeWidth: 1,
+              strokeOpacity: 1,
+              strokeColor: "#333333"
+            },
+            "Line": {
+              strokeWidth: 3,
+              strokeOpacity: 1,
+              strokeColor: "#666666",
+              strokeDashstyle: "dash"
+            },
+            "Polygon": {
+              strokeWidth: 2,
+              strokeOpacity: 1,
+              strokeColor: "#666666",
+              fillColor: "white",
+              fillOpacity: 0.3
+            }
+        };
+
+        var mystyle = new OpenLayers.Style();
+        mystyle.addRules([
+            new OpenLayers.Rule({symbolizer: sketchSymbolizers})
+        ]);
+
+        var styleMap=new OpenLayers.StyleMap({"default": mystyle});
+        var MLinearCtrlOptions =
+        {
+            title: 'линейка',
+            displayUnits: 'm',
+            eventListeners:
+            {
+              'measure': handleMeasure,
+              'measurepartial': handleMeasure,
+              'deactivate': hideDistance
+            },
+            handlerOptions:
+            {
+              persist: true,
+              layerOptions: {styleMap: styleMap}
+            }
+        };
+        edittb = new OpenLayers.Control.EditingToolbar(vector);
+
+        MeasureLinearCtrl = new OpenLayers.Control.Measure(OpenLayers.Handler.Path, MLinearCtrlOptions);
+        MeasureLinearCtrl.geodesic = true;
+        edittb.addControls([MeasureLinearCtrl]);
+        // edittb.addControls(new OpenLayers.Control.ModifyFeature(vector, {}));
+        foreach(edittb.controls,
+            function (el) {
+              el.events.register("activate", el, function (e) {
+                  if (e.object.CLASS_NAME == "OpenLayers.Control.DrawFeature")
+                  {
+                    if ($("sidebar").style.display != "block") 
+                        openSidebar({title: "Sketch features", content: "<h5>List of features</h5><ul><li>Points<ul id=\"points\"></ul></li><li>Lines<ul id=\"lines\"></ul></li><li>Polygons<ul id=\"polygons\"></ul></li></ul><p>Link to WMS-rendered image: <a id=\"wmslink\" href=\"#\">click</a></p>"});
+                  }
+              });
+              el.events.register("deactivate", el, function (e) {
+                  //
+              });
+            }
+        );
+        
+        /*var btn = new OpenLayers.Control.Button({
+            displayClass: "DrawToolbar",
+            type: OpenLayers.Control.TYPE_TOGGLE,
+            trigger: function () {alert("trigger");}
+        });
+        edittb.addControls([btn]);*/
+        
+
+        foreach(["featureadded", "featureremoved", "featuremodified"], 
+            function (ev) {
+              vector.events.register(ev, vector, featuremonitor);
+            }
+        );
+
+
+        map.addControl(edittb);
+    }
+
+    if (document.location.hash = "#osb") {
+        var osbControl = new OpenLayers.Control.OpenStreetBugs(osbLayer); // osbLayer is an instance of OpenLayers.Layer.OpenStreetBugs, see above
+        map.addControl(osbControl); // map is your instance of OpenLayers.Map
+    }
+
+    if (!map.getCenter()) {
+        var lonlat = new OpenLayers.LonLat(OpenLayers.Util.getParameters().mlon,53,OpenLayers.Util.getParameters().mlat);
+        lonlat.transform(map.displayProjection,map.projection);
+        mapkers.addMarker(new OpenLayers.Marker(lonlat, icon));
+        map.setCenter(lonlat, 7);
+        map.panTo(lonlat);
+    }
+
+    handleResize();
+
+    window.onload = handleResize;
+    window.onresize = handleResize;
+  }
+
+  // ]]>
+        </script>
+    </head>
+    <body onload="init()">
+        <p id="top">
+          <span id="logo"></span>
+          <span class="tabs">
+            <a class="action transparent" id="loginlink" onclick="return loginshow();" href="#">sign in</a>
+            <a class="action transparent" id="uploadlink" onclick="return uploadshow();" href="#" style="display: none;">upload</a>
+            <a class="tab" id="edit" href="#edit">edit</a>
+            <a class="tab" id="maxi" href="#maxi">maxi</a>
+            <a class="tab" id="mini" href="#mini">mini</a>
+            <a class="tab" id="transport" href="#transport">transport</a>
+            <a class="tab" id="tracks" href="#tracks">tracks</a>
+          </span>
+        </p>
+        <form id="loginform" class="form hidden">
+            <span class="hidden" id="posturl" title="/user/login">&nbsp;</span>
+            <input class="field" id="user" name="user" type="text" value=""/>
+            <input class="field" id="password" name="password" type="password" value=""/>
+            <span id="logonprogress" class="spin hidden">Logging in...</span>
+            <input onclick="return login(); return false;" id="submit" name="submit" type="submit" value="Log in"/>
+        </form>
+        <form id="uploadform" class="form hidden" method="post" action="/tracks/" enctype="multipart/form-data">
+            <input onclick="return startUpload(); return false;" type="submit" value="Upload" tabindex="1"/>
+            <input name="file" type="file" value="" tabindex="2"/>
+            <input name="op" type="hidden" value="upload" tabindex="3"/>
+            <span id="uploadprogress" class="spin hidden">Uploading...</span>
+        </form>
+        <div id="content">
+            <div id="sidebar" class="hidden">
+              <div class="sidebar_title">
+                <div id="sidebar_title">Sidebar</div>
+                <a id="sidebar_close" href="#" onclick="return closeSidebar();">×</a>
+              </div>
+              <div id="sidebar_content">
+                This is the sample content.
+              </div>
+            </div>
+            <div id="map" class="smallmap" style="border: 1px solid;"></div>
+        </div>
+
+        <div id="distance"></div>
+    </body>
+</html>
