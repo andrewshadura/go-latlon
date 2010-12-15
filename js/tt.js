@@ -19,6 +19,8 @@ function loadfeatures(url) {
     if (features) {
         features.destroy();
     }
+    objmodified = {};
+    objdownloaded = {};
     openSidebar({title: "Features", content: "&nbsp;"});
     features = new OpenLayers.Layer.Vector("Features", {
         projection: map.displayProjection,
@@ -77,7 +79,10 @@ function removeedit(o) {
         var s = o.children[0].value;
         if (s != oldvalue) {
             o.parentNode.style.backgroundColor = "#eaf0f0";
-            objmodified[o.parentNode.id] = true;
+            var id = o.id;
+            id = id.replace(/(node|way|relation)\.\d+\./, "");
+            objmodified[o.parentNode.id] = {};
+            objmodified[o.parentNode.id][id] = s;
         }
         s = stringmap(s, [[/&/g, "&amp;"], [/"/g, "&quot;"], [/'/g, "&#39;"], [/</g, "&lt;"], [/>/g, "&gt;"]]);
         o.innerHTML = s;
@@ -86,17 +91,73 @@ function removeedit(o) {
 }
 
 function getnext(a) {
-    if (a.length == 0) return;
+    if (a.length == 0) {
+        openchangeset();
+        return;
+    }
     var i = a.shift();
     OpenLayers.Request.GET({url: "/api/0.6/" + stringmap(i, [[".","/"]]), params: {}, success: function (o) {
-            $("log").innerHTML += ("<br />" + stringmap(o.responseText, [[/&/g, "&amp;"], [/"/g, "&quot;"], [/'/g, "&#39;"], [/</g, "&lt;"], [/>/g, "&gt;"]]));
+            $("log").innerHTML += ("Downloading " + stringmap(i, [["."," "]]) + "...<br />");
             objdownloaded[i] = OpenLayers.parseXMLString(o.responseText);
-            getnext(a);
+            var w = objdownloaded[i].documentElement.firstElementChild;
+            foreach(usefultags, function (e) {
+                var tags = w.getElementsByTagName("tag");
+                var l = tags.length;
+                var j;
+                var matches = 0;
+                for (j = 0; j < l; j++) {
+                    if (tags[j].attributes["k"].value == e) {
+                        if (objmodified[i][e])
+                            tags[j].setAttribute("v", objmodified[i][e]);
+                        matches++;
+                    }
+                }
+                if (matches == 0) {
+                    if ((objmodified[i][e]) && (objmodified[i][e] != "")) {
+                        var t = osmchanges.createElement("tag");
+                        t.setAttribute("k", e);
+                        t.setAttribute("v", objmodified[i][e]);
+                        w.appendChild(t);
+                    }
+                }
+            });
+            osmchanges.documentElement.firstElementChild.appendChild(w);
+            setTimeout(function() {
+                getnext(a);
+            }, 0);
+            /* tailcall(getnext, a); */
+        }
+    });
+}
+
+var osmchanges;
+var changesetid;
+
+function openchangeset() {
+    var changesetreq = "<?xml version='1.0' encoding='UTF-8'?><osm version='0.6' generator='JOSM'><changeset id='0' open='false'><tag k='comment' v='on-line edits' /><tag k='created_by' v='http://go.latlon.org/tt/' /></changeset></osm>";
+    $("log").innerHTML += ("Opening the new changeset...");
+    OpenLayers.Request.PUT({url: "/api/0.6/changeset/create", data: changesetreq, success: function (o) {
+            changesetid = o.responseText;
+            $("log").innerHTML += (" " + changesetid + "<br />Uploading changes...");
+            var m = osmchanges.documentElement.firstElementChild;
+            foreach(m.children, function (e) {
+                e.setAttribute("changeset", changesetid);
+                //e.setAttribute("version", parseInt(e.attributes["version"].value)+1);
+            });
+            OpenLayers.Request.POST({url: "/api/0.6/changeset/" + changesetid + "/upload", data: osmchanges, success: function (o) {
+                    $("log").innerHTML += (" done<br />Closing the changeset...");
+                    OpenLayers.Request.PUT({url: "/api/0.6/changeset/" + changesetid + "/close", success: function (o) {
+                            $("log").innerHTML += (" success!<br />");
+                        }
+                    });
+                }
+            });
         }
     });
 }
 
 function startupload() {
+    osmchanges = OpenLayers.parseXMLString("<osmChange version='0.3' generator='go.latlon.org/tt/'><modify></modify></osmChange>");
     var q = [];
     for(var i in objmodified) {
         q.push(i);
@@ -104,11 +165,13 @@ function startupload() {
     getnext(q);
 }
 
+var usefultags = ["name", "name:be", "name:ru"];
+
 function addfeature(feature) {
     if (feature.data["name"] == null) return;
     var t = $("transtable");
     if (t == null) {
-        openSidebar({title: "Features", content: "<table id='transtable' cellspacing='0'><thead><tr><th>name</th><th>name:be</th><th>name:ru</th></tr></thead><tbody></tbody></table><center><button id='okay'>Okay</button</center><p>Log:</p><p id='log'></p>"});
+        openSidebar({title: "Features", content: "<table id='transtable' cellspacing='0'><thead><tr><th>name</th><th>name:be</th><th>name:ru</th></tr></thead><tbody></tbody></table><center><button id='okay'>Okay</button</center><p>Log:</p><p id='log'></p>"}); // TODO: use usefultags
         $("okay").onclick = startupload;
         t = $("transtable");
     } else {
@@ -117,7 +180,7 @@ function addfeature(feature) {
     t = $("transtable").children[1];
     var r = document.createElement("tr");
     r.id = feature.fid;
-    foreach(["name", "name:be", "name:ru"], function (n) {
+    foreach(usefultags, function (n) {
         var e = document.createElement("td");
         e.appendChild(document.createTextNode(scheck(feature.data[n])));
         e.id = feature.fid + "." + n;
@@ -199,7 +262,7 @@ function init() {
             // before Control.MouseDefault gets to see it
             this.box = new OpenLayers.Handler.Box( control,
                 {"done": this.notice},
-                {keyMask: OpenLayers.Handler.MOD_SHIFT});
+                {keyMask: OpenLayers.Handler.MOD_CTRL});
             this.box.activate();
         },
 
@@ -245,7 +308,7 @@ function init() {
     window.onresize = handleResize;
     
     var sorry = document.createElement("div");
-    sorry.innerHTML = OpenLayers.i18n("This tools is still a work-in-progress. Please report any bugs you find to the author.");
+    sorry.innerHTML = OpenLayers.i18n("Ctrl-Drag to select the area to translate.<br />This tool is still a work-in-progress. Please report any bugs you find to the author.");
     sorry.id = "sorry";
     document.body.insertBefore(sorry, $("content"));
 }
