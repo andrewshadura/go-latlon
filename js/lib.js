@@ -10,18 +10,6 @@ if (using_ie) {
     width_correction = 0;
 }
 
-/*
-function tailcall(fn, args) {
-  setTimeout(function() {fn.apply(this, args)}, 0);
-};
-*/
-
-function tailthis() {
-  var fn = tail.caller;
-  var args = arguments;
-  setTimeout(function() {fn.apply(this, args)}, 0);
-};
-
 function foreach(arr, lambda) {
     var l = arr.length;
     for (var i = 0; i < l; i++) {
@@ -35,24 +23,6 @@ function stringmap(s, pairs) {
         s = s.replace(pairs[i][0], pairs[i][1]);
     }
     return s;
-}
-
-function cond(predicate, i, e) {
-    if (predicate) {
-        return i;
-    } else {
-        return e;
-    }
-}
-
-function scond(predicate, i, e) {
-    if (predicate) {
-        if (i) return i;
-        else return "";
-    } else {
-        if (e) return e;
-        else return "";
-    }
 }
 
 function getStyle(element, style) {

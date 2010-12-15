@@ -1,155 +1,37 @@
 var map;
-var bel, belsn;
+var bel;
 var osb;
 var mapnik;
 var markers;
 var selectControl;
 var popup;
-var box = null, boxes;
-var features = null;
+var cops;
+var features;
 var brokenContentSize;
-var questionform;
+
+function style_osm_feature(feature) {
+    alert(0);
+}
 
 var proto;
 
-var uploading = false;
-
-var modifiedstyle = {
-    strokeColor: "green",
-    strokeWidth: 3,
-    strokeOpacity: 0.5,
-    fillOpacity: 0.2,
-    fillColor: "green",
-    pointRadius: 6
-};
-
-var autostyle = {
-    strokeColor: "#b9b900",
-    strokeWidth: 3,
-    strokeOpacity: 0.5,
-    fillOpacity: 0.2,
-    fillColor: "#b9b900",
-    pointRadius: 6
-};
-
-var selectstyle = {
-    strokeColor: "blue",
-    strokeWidth: 3,
-    strokeOpacity: 0.5,
-    fillOpacity: 0.2,
-    fillColor: "blue",
-    pointRadius: 6
-};
-
-var hidestyle = {
-    strokeColor: "transparent",
-    fillColor: "transparent"
-};
-
-
 function loadfeatures(url) {
-    removeedit(editing);
-    if (uploading) return;
-    if (map.zoom < 16) {
-        if (map.zoom < 14) {
-            questionform.className = "form hidden";
-            questionform.innerHTML = "<div style='width: 300px; height: 100px;'>" +
-             "<p style='text-align: center;'>" + OpenLayers.i18n("Please zoom in to be able to select features") + "</p>" +
-             "<p style='text-align: center;'><button id='cancelbtn'>" + OpenLayers.i18n("Dismiss") + "</button></p></div>";
-            questionform.style.display = "block";
-            $("cancelbtn").onclick = function () {
-                questionform.style.display = "none";
-                return false;
-            }
-        } else {
-            questionform.className = "form hidden";
-            questionform.innerHTML = "<div style='width: 300px; height: 100px;'>" +
-             "<p style='text-align: center;'>" + OpenLayers.i18n("Please zoom in to be able to select features") + "</p>" +
-             "<p style='text-align: center;'><button id='cancelbtn'>" + OpenLayers.i18n("Dismiss") + "</button>" +
-             "<button id='loadbtn'>" + OpenLayers.i18n("Load anyway") + "</button></p></div>";
-            questionform.style.display = "block";
-            $("cancelbtn").onclick = function () {
-                questionform.style.display = "none";
-                return false;
-            }
-            $("loadbtn").onclick = function () {
-                if (!modified) {
-                    questionform.style.display = "none";
-                    actuallyloadfeatures(url);
-                } else {
-                    questionform.className = "form attention hidden";
-                    questionform.innerHTML = "<div style='width: 300px; height: 100px;'>" +
-                     "<p style='text-align: center;'>" + OpenLayers.i18n("You have unsaved changes. If you proceed, these changes will be lost") + "</p>" +
-                     "<p style='text-align: center;'><button id='cancelbtn'>" + OpenLayers.i18n("Cancel") + "</button>" +
-                     "<button id='discardbtn'>" + OpenLayers.i18n("Discard changes") + "</button></p></div>";
-                    questionform.style.display = "block";
-                    $("cancelbtn").onclick = function () {
-                        questionform.style.display = "none";
-                        return false;
-                    }
-                    $("discardbtn").onclick = function () {
-                        questionform.style.display = "none";
-                        actuallyloadfeatures(url);
-                        return false;
-                    }
-                }
-                return false;
-            }
-        }
-        return;
-    } else {
-        questionform.style.display = "none";
-    }
-    if (modified) {
-        questionform.className = "form attention hidden";
-        questionform.innerHTML = "<div style='width: 300px; height: 100px;'>" +
-         "<p style='text-align: center;'>" + OpenLayers.i18n("You have unsaved changes. If you proceed, these changes will be lost") + "</p>" +
-         "<p style='text-align: center;'><button id='cancelbtn'>" + OpenLayers.i18n("Cancel") + "</button>" +
-         "<button id='discardbtn'>" + OpenLayers.i18n("Discard changes") + "</button></p></div>";
-        questionform.style.display = "block";
-        $("cancelbtn").onclick = function () {
-            questionform.style.display = "none";
-            return false;
-        }
-        $("discardbtn").onclick = function () {
-            questionform.style.display = "none";
-            actuallyloadfeatures(url);
-            return false;
-        }
-        return;
-    }
-    actuallyloadfeatures(url);
-}
-
-var actualdata = 0;
-var gotsomedata = false;
-
-function actuallyloadfeatures(url) {
     if (features) {
         features.destroy();
     }
-    objmodified = {};
-    objdownloaded = {};
-    modified = false;
-
-    var d = new Date();
-    d = d.getTime();
-    actualdata = d;
-    gotsomedata = false;
-    openSidebar({title: OpenLayers.i18n("Features"), content: OpenLayers.i18n("Loading data") + "... <img src='/images/spin.gif'/>"});
-    setTimeout(function () {
-        if (gotsomedata) return;
-        $("sidebar_content").innerHTML = OpenLayers.i18n("Timed out waiting for data to load.");
-    }, 90000);
+    openSidebar({title: "Features", content: "&nbsp;"});
     features = new OpenLayers.Layer.Vector("Features", {
         projection: map.displayProjection,
         strategies: [new OpenLayers.Strategy.Fixed()],
-        style: hidestyle,
-        onFeatureInsert: function (feature) {
-            if (actualdata != d) return;
-            gotsomedata = true;
-            addfeature(feature);
+        style: {
+            strokeColor: "blue",
+            strokeWidth: 3,
+            strokeOpacity: 0.5,
+            fillOpacity: 0.2,
+            fillColor: "lightblue",
+            pointRadius: 6
         },
+        onFeatureInsert: addfeature,
         displayInLayerSwitcher: false,
         protocol: proto = new OpenLayers.Protocol.HTTP({
             url: url,
@@ -159,125 +41,23 @@ function actuallyloadfeatures(url) {
     map.addLayer(features);
 }
 
+function scheck(s) {
+    if (s) return s;
+    return "";
+}
+
 var editing = null;
 var oldvalue = null;
 
-var modified = false;
 var objmodified = {};
 
 var objdownloaded = {};
 
-function highlightfeature(id, style) {
-    var feature = features.getFeatureByFid(id);
-    feature.style = style;
-    features.drawFeature(feature, style);
-}
-
-function handlekey(key) {
-    switch (key) {
-        case "Escape": {
-            removeedit(editing);
-        } break;
-        case "Up": {
-            if (editing.parentNode.previousElementSibling) {
-                var id = editing.id;
-                id = id.replace(/(node|way|relation)\.\d+\./, "");
-                addedit($(editing.parentNode.previousElementSibling.id + "." + id));
-            }
-        } break;
-        case "Enter":
-        case "Down": {
-            if (editing.parentNode.nextElementSibling) {
-                var id = editing.id;
-                id = id.replace(/(node|way|relation)\.\d+\./, "");
-                addedit($(editing.parentNode.nextElementSibling.id + "." + id));
-            }
-        } break;
-        case "Left": {
-            if (editing && (editing.children[0].selectionEnd == editing.children[0].selectionStart)) {
-                if (editing.children[0].selectionStart == 0) {
-                    if (editing.previousElementSibling)
-                        addedit(editing.previousElementSibling);
-                    return false;
-                }
-            }
-            return true;
-        } break;
-        case "Right": {
-            if (editing && (editing.children[0].selectionEnd == editing.children[0].selectionStart)) {
-                if (editing.children[0].selectionEnd == editing.children[0].textLength) {
-                    if (editing.nextElementSibling)
-                        addedit(editing.nextElementSibling);
-                    return false;
-                }
-            }
-            return true;
-        } break;
-    }
-    return false;
-}
-
-var tagspopup = null;
-
-var tagcombo = null;
-
-function addtagcombo(o, selected, populatecombo, onselect) {
-    if (o.children.length) return;
-    if (tagcombo) removetagcombo(tagcombo);
-    o.innerHTML = "<select id='"+ o.id +"_combo'></select>";
-    var options = populatecombo();
-    for (var i in options) {
-        var y = document.createElement("option");
-        y.value = i;
-        y.text = options[i];
-        y.selected = (selected == i);
-        o.children[0].add(y, null);
-    }
-    o.onblur = function () {
-        removetagcombo(o);
-    }
-    o.children[0].focus();
-    tagcombo = o;
-}
-
-function removetagcombo(o) {
-    if (!o.children.length) return;
-    var s = o.children[0].value;
-    o.innerHTML = stringmap(s, [[/&/g, "&amp;"], [/"/g, "&quot;"], [/'/g, "&#39;"], [/</g, "&lt;"], [/>/g, "&gt;"]]);
-    var id = o.id.replace("tagspan.", "");
-    usefultags[parseInt(id)] = s;
-}
-
-function addtagedit(o, selected, populatecombo, onselect) {
-    if (o.children.length) return;
-    if (tagcombo) removetagcombo(tagcombo);
-    o.innerHTML = "<select id='"+ o.id +"_combo'></select>";
-    var options = populatecombo();
-    for (var i in options) {
-        var y = document.createElement("option");
-        y.value = i;
-        y.text = options[i];
-        y.selected = (selected == i);
-        o.children[0].add(y, null);
-    }
-    o.onblur = function () {
-        removetagcombo(o);
-    }
-    o.children[0].focus();
-    tagcombo = o;
-}
-
-function removetagedit(o) {
-    if (!o.children.length) return;
-    o.innerHTML = stringmap(o.children[0].value, [[/&/g, "&amp;"], [/"/g, "&quot;"], [/'/g, "&#39;"], [/</g, "&lt;"], [/>/g, "&gt;"]]);
-}
-
 function addedit(o) {
-    if (uploading) return;
     if (!editing) {
         var w = o.clientWidth;
         var h = o.clientHeight;
-        o.innerHTML = "<input id='"+ o.id +"_edit' type='text' value=\"" + stringmap(o.innerHTML, [[/"/g, "&quot;"], [/>/g, "&gt;"], [/</g, "&lt;"]]) + "\" />";
+        o.innerHTML = "<input id='"+ o.id +"_edit' type='text' value=\"" + o.innerHTML + "\" />";
         o.onblur = function () {
             removeedit(o);
         }
@@ -286,281 +66,49 @@ function addedit(o) {
         o.children[0].style.width = w + "px";
         o.children[0].style.height = h + "px";
         o.children[0].focus();
-        highlightfeature(o.parentNode.id, selectstyle);
-        tagspopup = $("tagspopup");
-        var s = "<ul id='tagslist'>", t, f = features.getFeatureByFid(o.parentNode.id).data;
-        for (t in f) {
-            s += ("<li>" + stringmap(t + "=" + f[t], [[/&/g, "&amp;"], [/"/g, "&quot;"], [/'/g, "&#39;"], [/</g, "&lt;"], [/>/g, "&gt;"]]) + "</li>");
-        }
-        s += "</ul>";
-        tagspopup.innerHTML = s;
-        tagspopup.className = "form";
-        tagspopup.style.left = "0px";
-        tagspopup.style.right = "auto";
-        tagspopup.style.height = "";
-        tagspopup.style.height = cond(tagspopup.scrollHeight > 100, 100, (tagspopup.scrollHeight)) + "px";
-        if ((o.parentNode.offsetTop - $("sidebar_content").offsetTop) < ($("sidebar_content").offsetHeight/2)) {
-            tagspopup.style.top = "";
-            tagspopup.style.bottom = "0px";
-        } else {
-            tagspopup.style.top = $("sidebar_title").offsetHeight + "px";
-            tagspopup.style.bottom = "";
-        }
     } else {
-        if (editing == o) return;
         removeedit(editing);
-        if (o)
-            addedit(o);
+        addedit(o);
     }
 }
 
 function removeedit(o) {
-    if (uploading) return;
     if (editing) {
         var s = o.children[0].value;
         if (s != oldvalue) {
-            o.parentNode.className = "modifiedrow";
-            var id = o.id;
-            id = id.replace(/(node|way|relation)\.\d+\./, "");
-            if (!objmodified[o.parentNode.id]) {
-                objmodified[o.parentNode.id] = {};
-            }
-            objmodified[o.parentNode.id][id] = s;
-            highlightfeature(o.parentNode.id, modifiedstyle);
-            modified = true;
+            o.parentNode.style.backgroundColor = "#eaf0f0";
+            objmodified[o.parentNode.id] = true;
         }
         s = stringmap(s, [[/&/g, "&amp;"], [/"/g, "&quot;"], [/'/g, "&#39;"], [/</g, "&lt;"], [/>/g, "&gt;"]]);
-        if (!objmodified[o.parentNode.id]) {
-            highlightfeature(o.parentNode.id, hidestyle);
-        } else {
-            highlightfeature(o.parentNode.id, modifiedstyle);
-        }
         o.innerHTML = s;
         editing = null;
-        tagspopup.className = "form hidden";
     }
 }
 
 function getnext(a) {
-    if (a.length == 0) {
-        openchangeset();
-        return;
-    }
+    if (a.length == 0) return;
     var i = a.shift();
-    $("log").innerHTML += (OpenLayers.i18n("Downloading") + " " + stringmap(i, [["."," "]]) + "...");
     OpenLayers.Request.GET({url: "/api/0.6/" + stringmap(i, [[".","/"]]), params: {}, success: function (o) {
-            $("log").innerHTML += "<br />";
+            $("log").innerHTML += ("<br />" + stringmap(o.responseText, [[/&/g, "&amp;"], [/"/g, "&quot;"], [/'/g, "&#39;"], [/</g, "&lt;"], [/>/g, "&gt;"]]));
             objdownloaded[i] = OpenLayers.parseXMLString(o.responseText);
-            var w = objdownloaded[i].documentElement.firstElementChild;
-            foreach(usefultags, function (e) {
-                var tags = w.getElementsByTagName("tag");
-                var l = tags.length;
-                var j;
-                var matches = 0;
-                for (j = 0; j < l; j++) {
-                    if (tags[j].attributes["k"].value == e) {
-                        if (objmodified[i][e])
-                            tags[j].setAttribute("v", objmodified[i][e]);
-                        matches++;
-                    }
-                }
-                if (matches == 0) {
-                    if ((objmodified[i][e]) && (objmodified[i][e] != "")) {
-                        var t = osmchanges.createElement("tag");
-                        t.setAttribute("k", e);
-                        t.setAttribute("v", objmodified[i][e]);
-                        w.appendChild(t);
-                    }
-                }
-            });
-            osmchanges.documentElement.firstElementChild.appendChild(w);
-            setTimeout(function() {
-                getnext(a);
-            }, 0);
-            /* tailcall(getnext, a); */
-        }
-    });
-}
-
-var osmchanges;
-var changesetid;
-
-function openchangeset() {
-    var changesetreq = "<?xml version='1.0' encoding='UTF-8'?><osm version='0.6' generator='JOSM'><changeset id='0' open='false'><tag k='comment' v='on-line edits' /><tag k='created_by' v='http://latlon.org/tt/' /></changeset></osm>";
-    $("log").innerHTML += (OpenLayers.i18n("Opening the new changeset") + "...");
-    OpenLayers.Request.PUT({url: "/api/0.6/changeset/create", data: changesetreq, success: function (o) {
-            changesetid = o.responseText;
-            $("log").innerHTML += (" " + changesetid + "<br />" + OpenLayers.i18n("Uploading changes") + "...");
-            var m = osmchanges.documentElement.firstElementChild;
-            foreach(m.children, function (e) {
-                e.setAttribute("changeset", changesetid);
-                //e.setAttribute("version", parseInt(e.attributes["version"].value)+1);
-            });
-            OpenLayers.Request.POST({url: "/api/0.6/changeset/" + changesetid + "/upload", data: osmchanges, success: function (o) {
-                    $("log").innerHTML += (" " + OpenLayers.i18n("done") + "<br />" + OpenLayers.i18n("Closing the changeset") + "...");
-                    OpenLayers.Request.PUT({url: "/api/0.6/changeset/" + changesetid + "/close", success: function (o) {
-                            uploading = false;
-                            $("wait").style.display = "none";
-                            $("log").innerHTML += (" " + OpenLayers.i18n("success") + "!<br />");
-                            var r = $("transtable").rows;
-                            var l = r.length;
-                            var i;
-                            for (i = 1; i < l; i++) {
-                                if ((r[i].className == "modifiedrow") || (r[i].className == "autorow")) {
-                                    r[i].className = "savedrow";
-                                }
-                            }
-                            modified = false;
-                        }, failure: function (o) {
-                            uploading = false;
-                            $("wait").style.display = "none";
-                            $("log").innerHTML += " " + OpenLayers.i18n("failure") + ".";
-                        }
-                    });
-                }, failure: function (o) {
-                    uploading = false;
-                    $("wait").style.display = "none";
-                    $("log").innerHTML += " " + OpenLayers.i18n("failure") + ".";
-                }
-            });
-        }, failure: function (o) {
-            uploading = false;
-            $("wait").style.display = "none";
-            $("log").innerHTML += " " + OpenLayers.i18n("failure") + ".";
+            getnext(a);
         }
     });
 }
 
 function startupload() {
-    if (uploading) return;
-    if (!modified) return;
-    uploading = true;
-    osmchanges = OpenLayers.parseXMLString("<osmChange version='0.3' generator='latlon.org/tt/'><modify></modify></osmChange>");
     var q = [];
     for(var i in objmodified) {
         q.push(i);
     }
-    tagspopup.className = "form hidden";
-    $("wait").style.display = "inline";
     getnext(q);
 }
 
-var maintag = "name";
-var usefultags = ["name", "name:be", "name:ru"];
-
-function decodehtml(html) {
-    var e = document.createElement("div");
-    e.innerHTML = "<input value=\""+ stringmap(html, [[/"/g, "&quot;"], [/>/g, "&gt;"], [/</g, "&lt;"]]) + "\"/>";
-    return e.children[0].value;
-}
-
-function filltags(tag) {
-    removeedit(editing);
-    var r = $("transtable").rows;
-    var l = r.length;
-    var i, id, v;
-    var tm = {};
-    for (i = 1; i < l; i++) {
-        id = r[i].id;
-        v = $(id + "." + maintag).innerHTML;
-        if (!tm[v]) {
-            tm[v] = $(id + "." + tag).innerHTML;
-        }
-    }
-    for (i = 1; i < l; i++) {
-        id = r[i].id;
-        v = $(id + "." + maintag).innerHTML;
-        if ($(id + "." + tag).innerHTML == "") {
-            if (tm[v]) {
-                $(id + "." + tag).innerHTML = tm[v];
-            } else {
-                $(id + "." + tag).innerHTML = v;
-            }
-            $(id).className = "autorow";
-            if (!objmodified[id]) {
-                objmodified[id] = {};
-            }
-            objmodified[id][tag] = decodehtml(v);
-            modified = true;
-            highlightfeature(id, autostyle);
-        }
-    }
-}
-
-function filltagsknown(tag) {
-    removeedit(editing);
-    var r = $("transtable").rows;
-    var l = r.length;
-    var i, id, v;
-    var tm = {};
-    for (i = 1; i < l; i++) {
-        id = r[i].id;
-        v = $(id + "." + maintag).innerHTML;
-        if (!tm[v]) {
-            tm[v] = $(id + "." + tag).innerHTML;
-        }
-    }
-    for (i = 1; i < l; i++) {
-        id = r[i].id;
-        v = $(id + "." + maintag).innerHTML;
-        if ($(id + "." + tag).innerHTML == "") {
-            if (tm[v]) {
-                $(id + "." + tag).innerHTML = tm[v];
-                $(id).className = "autorow";
-                if (!objmodified[id]) {
-                    objmodified[id] = {};
-                }
-                objmodified[id][tag] = decodehtml(v);
-                modified = true;
-                highlightfeature(id, autostyle);
-            }
-        }
-    }
-}
-
-function dumbfilltags(tag) {
-    removeedit(editing);
-    var r = $("transtable").rows;
-    var l = r.length;
-    var i, id;
-    for (i = 1; i < l; i++) {
-        id = r[i].id;
-        if ($(id + "." + tag).innerHTML == "") {
-            $(id + "." + tag).innerHTML = $(id + "." + maintag).innerHTML;
-            $(id).className = "autorow";
-        }
-    }
-}
-
 function addfeature(feature) {
-    /* if (feature.data[maintag] == null) return; */
-    var useful = false;
-    for (var i in usefultags) {
-        if (feature.data[usefultags[i]] != null) {
-            useful = true;
-        }
-    }
-    if (!useful) return;
+    if (feature.data["name"] == null) return;
     var t = $("transtable");
     if (t == null) {
-        var h = "";
-        foreach(usefultags, function (x) {
-            h += ("<th>" + cond(x == maintag, x, "<a href='#' title='Autofill' id='head." + x +"'>&rarr;</a>" +
-                "<a href='#' title='Autofill known' id='head2." + x +"'>&#8801;</a>" + x) + "</th>");
-        });
-        openSidebar({title: OpenLayers.i18n("Features"), content: "<table id='transtable' cellspacing='0'><thead><tr>" + h + "</tr></thead><tbody></tbody></table><p style='text-align: center'><button id='okay'>Okay</button</p><p>" + OpenLayers.i18n("Log") + ":</p><p><span id='log'></span><img id='wait' style='display: none;' src='/images/spin.gif'/></p>"});
-        foreach(usefultags, function (x) {
-            if (x != maintag) {
-                $("head." + x).onclick = function () {
-                    filltags(x);
-                    return false;
-                }
-                $("head2." + x).onclick = function () {
-                    filltagsknown(x);
-                    return false;
-                }
-            }
-        });
+        openSidebar({title: "Features", content: "<table id='transtable' cellspacing='0'><thead><tr><th>name</th><th>name:be</th><th>name:ru</th></tr></thead><tbody></tbody></table><center><button id='okay'>Okay</button</center><p>Log:</p><p id='log'></p>"});
         $("okay").onclick = startupload;
         t = $("transtable");
     } else {
@@ -569,16 +117,11 @@ function addfeature(feature) {
     t = $("transtable").children[1];
     var r = document.createElement("tr");
     r.id = feature.fid;
-    var i = 0;
-    foreach(usefultags, function (n) {
+    foreach(["name", "name:be", "name:ru"], function (n) {
         var e = document.createElement("td");
-        e.appendChild(document.createTextNode(scond(feature.data[n], feature.data[n])));
+        e.appendChild(document.createTextNode(scheck(feature.data[n])));
         e.id = feature.fid + "." + n;
-        if (i == 0) {
-            e.className = feature.fid.replace(/\.\d+/, "") + "obj";
-        }
-        i++;
-        e.onclick = function (ev) {
+        e.onclick = function () {
             addedit(e);
         }
         r.appendChild(e);
@@ -642,58 +185,9 @@ function init() {
 
     var date = new Date();
     bel = new OpenLayers.Layer.OSM("Беларуская", "http://tile.latlon.org/tiles/${z}/${x}/${y}.png", {isBaseLayer: true,  type: 'png', displayOutsideMaxExtent: true, transitionEffect: "resize"});
-    belsn = new OpenLayers.Layer.OSM("Беларуская (kosmosnimki)", "http://91.208.39.18/kosmo-be/${z}/${x}/${y}.png", {isBaseLayer: true,  type: 'png', displayOutsideMaxExtent: true, transitionEffect: "resize"});
 
-    boxes  = new OpenLayers.Layer.Boxes("Boxes", {displayInLayerSwitcher: false});
-    
-    map.addLayers([mapnik, bel, belsn, boxes]);
-    map.setBaseLayer(bel);
-    {
-        var h = "";
-        var i = 0;
-        foreach(usefultags, function (x) {
-            h += ("<li>" + cond(x == maintag, "<span class='maintagli tagli' id='tagspan."+ i + "'>" + x + "</span> <a class='actionlink hidden' href='#'>" + OpenLayers.i18n("Make default") + "</a>", "<span class='tagli' id='tagspan."+ i + "'>" + x + "</span> <a class='actionlink' href='#'>" + OpenLayers.i18n("Make default") + "</a>") + "</li>");
-            i++;
-        });
-        openSidebar({title: OpenLayers.i18n("Features"), content: "<p style='text-align: center; margin: 5px;'>" + OpenLayers.i18n("Use Ctrl+drag to select the area to download. Remember that you have to be a <a href='http://www.openstreetmap.org/user/new'>registered</a> OpenStreetMap user to save your changes.") + "</p>" +
-            "<p style=''>" + OpenLayers.i18n("Tags to edit (click to change)") + ":</p><ul style='margin-left: 10pt;'>" + h + "</ul>"});
-        var l = i;
-        i = 0;
-        foreach(usefultags, function (x) {
-            var o = $("tagspan." + i);
-            var ll = l;
-            var ii = i;
-            o.parentNode.getElementsByTagName("a")[0].onclick = function () {
-                if (tagcombo) removetagcombo(tagcombo);
-                tagcombo = null;
-                var i;
-                for (i = 0; i < ll; i++) {
-                    var oo = $("tagspan." + i);
-                    oo.parentNode.getElementsByTagName("a")[0].className = (i == ii) ? "actionlink hidden" : "actionlink";
-                    oo.className = (i == ii) ? "maintagli tagli" : "tagli";
-                }
-                maintag = decodehtml(o.innerHTML);
-            }
-            $("tagspan." + i).onclick = function () {
-                addtagcombo(o, x, function () {
-                    var l = {};
-                    foreach(usefultags, function (y) {
-                        l[y] = y;
-                    });
-                    foreach(["name", "name:en", "name:be", 
-                             "name:uk", "name:ru", "name:de",
-                             "name:pl", "name:cz", "name:sk",
-                             "old_name", "int_name", "alt_name"], function (y) {
-                        l[y] = y;
-                    });
-                    return l;
-                }, function () {
-                    alert(x);
-                });
-            }
-            i++;
-        });
-    }
+    map.addLayers([mapnik, bel]);
+    openSidebar({title: "Features", content: "&nbsp;"});
 
     //map.addLayers([osbLayer]);
     //cafes.preFeatureInsert = style_osm_feature; 
@@ -705,28 +199,23 @@ function init() {
             // before Control.MouseDefault gets to see it
             this.box = new OpenLayers.Handler.Box( control,
                 {"done": this.notice},
-                {keyMask: OpenLayers.Handler.MOD_CTRL});
+                {keyMask: OpenLayers.Handler.MOD_SHIFT});
             this.box.activate();
         },
 
         notice: function (bounds) {
             var ll = map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.left, bounds.bottom)); 
-            var ur = map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.right, bounds.top)); 
-            if (box) {
-                boxes.removeMarker(box);
-                box.destroy();
-            }
-            boxes.addMarker(box = new OpenLayers.Marker.Box(new OpenLayers.Bounds(ll.lon.toFixed(4), ll.lat.toFixed(4), ur.lon.toFixed(4), ur.lat.toFixed(4))));
             ll.transform(map.projection,map.displayProjection);
+            var ur = map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.right, bounds.top)); 
             ur.transform(map.projection,map.displayProjection);
             /*alert(ll.lon.toFixed(4) + ", " + 
                   ll.lat.toFixed(4) + ", " + 
                   ur.lon.toFixed(4) + ", " + 
                   ur.lat.toFixed(4));*/
-            loadfeatures("/api/0.6/map?bbox=" + ll.lon.toFixed(7) + "," + 
-                  ll.lat.toFixed(7) + "," + 
-                  ur.lon.toFixed(7) + "," + 
-                  ur.lat.toFixed(7));
+            loadfeatures("/api/0.6/map?bbox=" + ll.lon.toFixed(4) + "," + 
+                  ll.lat.toFixed(4) + "," + 
+                  ur.lon.toFixed(4) + "," + 
+                  ur.lat.toFixed(4));
         }
     });
     map.addControl(control);
@@ -751,53 +240,18 @@ function init() {
     }
 
     handleResize();
-    foreach(["Left", "Up", "Down", "Right", "Enter", "Escape"], function (key) {
-        shortcut.add(key, function () {
-            return handlekey(key);
-        });
-    });
 
     window.onload = handleResize;
     window.onresize = handleResize;
-   
-    tagspopup = document.createElement("div");
-    tagspopup.id = "tagspopup";
-    tagspopup.className = "form hidden";
-    $("sidebar").appendChild(tagspopup);
-
-    questionform = document.createElement("form");
-    questionform.innerHTML = OpenLayers.i18n("Are you sure?");
-    questionform.id = "question";
-    questionform.className = "form hidden";
-    document.body.insertBefore(questionform, $("content"));
     
     var sorry = document.createElement("div");
-    sorry.innerHTML = OpenLayers.i18n("Ctrl-Drag to select the area to translate.<br />This tool is still a work-in-progress. Please <a href='https://bitbucket.org/andrew_shadoura/go-latlon/issues/new'>report</a> any bugs you find to the author.");
+    sorry.innerHTML = OpenLayers.i18n("This tools is still a work-in-progress. Please report any bugs you find to the author.");
     sorry.id = "sorry";
     document.body.insertBefore(sorry, $("content"));
 }
 
 
 OpenLayers.Lang.ru = OpenLayers.Util.extend(OpenLayers.Lang.ru, {
-    "Please zoom in to be able to select features": "Пожалуйста, приблизьте карту, чтобы начать редактирование",
-    "Dismiss": "Закрыть",
-    "You have unsaved changes. If you proceed, these changes will be lost": "Ваши изменения ещё не сохранены. Если Вы продолжите, они будут утеряны",
-    "Discard changes": "Отменить правки",
-    "Timed out waiting for data to load.": "Таймаут",
-    "Features": "Данные",
-    "Loading data": "Загрузка данных",
-    "Opening the new changeset": "Открытие пакета правок",
-    "Log": "Журнал работы",
-    "Use Ctrl+drag to select the area to download. Remember that you have to be a <a href='http://www.openstreetmap.org/user/new'>registered</a> OpenStreetMap user to save your changes.": "Выделите прямоугольную область, зажав Ctrl. Учтите, для сохранения правок необходимо быть <a href='http://www.openstreetmap.org/user/new'>зарегистрированным</a> пользователем OpenStreetMap.",
-    "Tags to edit (click to change)": "Теги для редактирования (нажмите, чтобы изменить)",
-    "Are you sure?": "Уверены?",
-    "Downloading": "Загрузка данных",
-    "Uploading changes": "Сохранение данных",
-    "Closing the changeset": "Закрытие пакета правок",
-    "Ctrl-Drag to select the area to translate.<br />This tool is still a work-in-progress. Please <a href='https://bitbucket.org/andrew_shadoura/go-latlon/issues/new'>report</a> any bugs you find to the author.": "Выделите область с Ctrl.<br />Этот инструмент находится в разработке. <a href='https://bitbucket.org/andrew_shadoura/go-latlon/issues/new'>Сообщайте</a> об ошибках авторам.",
-    "done": "завершено",
-    "failure": "ошибка",
-    "success": "завершено успешно",
     "Say": "Сообщить",
     "Your message:": "Комментарий",
     "Bump": "Спящий полицейский",
