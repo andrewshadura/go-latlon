@@ -1,3 +1,5 @@
+  var epsg4326 = new OpenLayers.Projection("EPSG:4326");
+
   function osm_getTileURL(bounds)
   {
     var res = this.map.getResolution();
@@ -65,10 +67,62 @@
     return value == 'auto' ? null : value;
   }
 
+  function foreach(arr, lambda) {
+      for(var i = arr.length - 1; i >= 0; i--) {
+        lambda(arr[i]);
+      }
+  }
+
+  function stringmap(s, pairs) {
+      for(var i = pairs.length - 1; i >= 0; i--) {
+        s = s.replace(pairs[i][0], pairs[i][1]);
+      }
+      return s;
+  }
+
+  var onclose;
+
+  function openSidebar(options) {
+    options = options || {};
+
+    if (onclose) {
+       onclose();
+       onclose = null;
+    }
+
+    if (options.title) { $("sidebar_title").innerHTML = options.title; }
+    if (options.content) { $("sidebar_content").innerHTML = options.content; }
+
+    if (options.width) { $("sidebar").style.width = options.width; }
+    else { $("sidebar").style.width = "30%"; }
+
+    $("sidebar").style.display = "block";
+
+    handleResize();
+
+    onclose = options.onclose;
+  }
+
+  function closeSidebar() {
+    $("sidebar").style.display = "none";
+
+    handleResize();
+
+    if (onclose) {
+       onclose();
+       onclose = null;
+    }
+  }
+
+  function updateSidebar(title, content) {
+    $("sidebar_title").innerHTML = title;
+    $("sidebar_content").innerHTML = content;
+  }
+
   function handleResize() {
     var centre = map.getCenter();
     var zoom = map.getZoom();
-    var sidebar_width = 0; // $("sidebar").offsetWidth;
+    var sidebar_width = getStyle($("sidebar"), "width");
 
     if (sidebar_width > 0) {
       sidebar_width = sidebar_width + 5
@@ -83,6 +137,7 @@
     document.getElementById("map").style.left = (sidebar_width) + "px";
     document.getElementById("map").style.width = (document.getElementById("content").offsetWidth - sidebar_width) + "px";
     document.getElementById("map").style.height = (document.getElementById("content").offsetHeight - 2) + "px";
+    document.getElementById("sidebar").style.height = (document.getElementById("content").offsetHeight - 2) + "px";
 
     map.setCenter(centre, zoom);
   }
@@ -200,12 +255,23 @@
   }
 
   function sketch() {
-    maxi();
     vector = new OpenLayers.Layer.Vector("Editable Vectors");
   }
 
   function sketchadd() {
-    map.addLayers([mapnik, bel, yasat, gshtab, road, vector]);
+    map.addLayers([vector]);
+  }
+
+  function gpx(url) {
+    lgpx = new OpenLayers.Layer.GML("GPX track", url, {
+      format: OpenLayers.Format.GPX,
+      style: {strokeColor: "red", strokeWidth: 5, strokeOpacity: 0.6},
+      projection: new OpenLayers.Projection("EPSG:4326")
+    });
+  }
+
+  function gpxadd() {
+    map.addLayer(lgpx);
   }
 
   function loginshow() {
@@ -222,9 +288,18 @@
           $("password").style.display = "inline";
         }
         $("submit").style.display = "inline";
-        $("loginform").style.display = "block"
+        $("loginform").style.display = "block";
     } else {
         $("loginform").style.display = "none";
+    }
+    return false;
+  }
+
+  function uploadshow() {
+    if ($("uploadform").style.display != "block") {
+        $("uploadform").style.display = "block";
+    } else {
+        $("uploadform").style.display = "none";
     }
     return false;
   }
@@ -237,9 +312,11 @@
         {
           $("logonprogress").className = "";
           $("logonprogress").innerHTML = "Logged out.";
-          $("loginlink").innerHTML = "Welcome, " + uo.user;
+          $("loginlink").innerHTML = "Welcome, " + uo.user + ".";
           $("submit").value = "Log out";
           $("posturl").title = "/user/logout";
+          $("uploadlink").style.display = "inline";
+          $("uploadlink").style.color = "black";
         }
         else
         {
@@ -249,10 +326,14 @@
         }
         $("loginlink").style.color = "black";
         $("loginform").style.display = "none";
+        $("uploadform").style.display = "none";
     }, failure: function (o) {
         $("loginlink").innerHTML = "sign in";
         $("loginlink").style.color = "black";
         $("loginform").style.display = "none";
+        $("uploadlink").style.color = "transparent";
+        $("uploadlink").style.display = "none";
+        $("uploadform").style.display = "none";
         $("submit").value = "Log in";
         $("posturl").title = "/user/login";
     }, scope: this});
@@ -291,4 +372,127 @@
     return false;
   }
 
+  function startUpload() {
+        $("uploadprogress").innerHTML = "Preparing upload...";
+        $("uploadprogress").className = "spin";
+        $("uploadprogress").style.display = "inline";
+        var f = $("uploadform");
+        f.setAttribute("action", "/tracks/" + uo.user + "/");
+        OpenLayers.Request.GET({url: "/tracks/", params: {"op": "create", "subdir": uo.user}, success: function (o) {
+          $("uploadprogress").innerHTML = "Uploading...";
+          $("uploadprogress").className = "spin";
+          $("uploadprogress").style.display = "inline";
+          var f = $("uploadform");
+          AIM.submit(f, {'onComplete': completeUpload});
+          f.submit();
+        }, failure: function (o) {
+          $("uploadprogress").className = "";
+          $("uploadprogress").innerHTML = "Error preparing upload.";
+        }, scope: this});
+        return false;
+  }
 
+  function completeUpload() {
+      $("uploadprogress").className = "";
+      $("uploadprogress").innerHTML = "Uploaded.";
+  }
+
+  function featuremonitor(e) {
+      var li;
+      $("points").innerHTML = "";
+      $("lines").innerHTML = "";
+      $("polygons").innerHTML = "";
+      foreach(e.object.features, 
+        function (f) {
+            switch (f.geometry.CLASS_NAME) {
+              case "OpenLayers.Geometry.Point": {
+                li = document.createElement("li");
+                li.innerHTML = f.geometry;
+                $("points").appendChild(li)
+              } break;
+              case "OpenLayers.Geometry.LineString": {
+                li = document.createElement("li");
+                li.innerHTML = f.geometry;
+                $("lines").appendChild(li)
+              } break;
+              case "OpenLayers.Geometry.Polygon": {
+                li = document.createElement("li");
+                li.innerHTML = f.geometry;
+                $("polygons").appendChild(li)
+              } break;
+            }
+        }
+      );
+      $("wmslink").href = getwmslink("osm", 300);
+  }
+
+  function getMapExtent() {
+      return map.getExtent().clone().transform(map.getProjectionObject(), epsg4326);
+  }
+
+
+  function getwmslink(lay, width) {
+      //
+      var geom = wkt.write(vector.features);
+      geom = stringmap(geom, [['((', '('], ['))', ')'], ['GEOMETRYCOLLECTION(', ''], [/^\(/, ""], [/\)$/, ""]]);
+      if (geom.length > 0) geom = "&wkt=" + geom;
+      return 'http://wms.latlon.org/?format=image/png&layers=' + lay + '&width=' + width + '&bbox=' + getMapExtent().left + ',' + getMapExtent().bottom + ',' + getMapExtent().right + ',' + getMapExtent().top + "" + geom;
+  }
+
+/**
+*
+*  AJAX IFRAME METHOD (AIM)
+*  http://www.webtoolkit.info/
+*
+**/
+/* License: CC-BY-SA 2.0 */
+
+AIM = {
+ 
+  frame : function(c) {
+ 
+    var n = 'f' + Math.floor(Math.random() * 99999);
+    var d = document.createElement('DIV');
+    d.innerHTML = '<iframe style="display:none" src="about:blank" id="'+n+'" name="'+n+'" onload="AIM.loaded(\''+n+'\')"></iframe>';
+    document.body.appendChild(d);
+ 
+    var i = document.getElementById(n);
+    if (c && typeof(c.onComplete) == 'function') {
+      i.onComplete = c.onComplete;
+    }
+ 
+    return n;
+  },
+ 
+  form : function(f, name) {
+    f.setAttribute('target', name);
+  },
+ 
+  submit : function(f, c) {
+    AIM.form(f, AIM.frame(c));
+    if (c && typeof(c.onStart) == 'function') {
+      return c.onStart();
+    } else {
+      return true;
+    }
+  },
+ 
+  loaded : function(id) {
+    var i = document.getElementById(id);
+    if (i.contentDocument) {
+      var d = i.contentDocument;
+    } else if (i.contentWindow) {
+      var d = i.contentWindow.document;
+    } else {
+      var d = window.frames[id].document;
+    }
+    if (d.location.href == "about:blank") {
+      return;
+    }
+ 
+    if (typeof(i.onComplete) == 'function') {
+      i.onComplete(d.body.innerHTML);
+    }
+  }
+ 
+}
