@@ -10,6 +10,18 @@ if (using_ie) {
     width_correction = 0;
 }
 
+/*
+function tailcall(fn, args) {
+  setTimeout(function() {fn.apply(this, args)}, 0);
+};
+*/
+
+function tailthis() {
+  var fn = tail.caller;
+  var args = arguments;
+  setTimeout(function() {fn.apply(this, args)}, 0);
+};
+
 function foreach(arr, lambda) {
     var l = arr.length;
     for (var i = 0; i < l; i++) {
