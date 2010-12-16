@@ -128,8 +128,9 @@ function getnext(a) {
         return;
     }
     var i = a.shift();
+    $("log").innerHTML += ("Downloading " + stringmap(i, [["."," "]]) + "...");
     OpenLayers.Request.GET({url: "/api/0.6/" + stringmap(i, [[".","/"]]), params: {}, success: function (o) {
-            $("log").innerHTML += ("Downloading " + stringmap(i, [["."," "]]) + "...<br />");
+            $("log").innerHTML += "<br />";
             objdownloaded[i] = OpenLayers.parseXMLString(o.responseText);
             var w = objdownloaded[i].documentElement.firstElementChild;
             foreach(usefultags, function (e) {
@@ -179,6 +180,7 @@ function openchangeset() {
             OpenLayers.Request.POST({url: "/api/0.6/changeset/" + changesetid + "/upload", data: osmchanges, success: function (o) {
                     $("log").innerHTML += (" done<br />Closing the changeset...");
                     OpenLayers.Request.PUT({url: "/api/0.6/changeset/" + changesetid + "/close", success: function (o) {
+                            uploading = false;
                             $("wait").style.display = "none";
                             $("log").innerHTML += (" success!<br />");
                         }, failure: function (o) {
