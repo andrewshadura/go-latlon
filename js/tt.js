@@ -9,10 +9,6 @@ var cops;
 var features;
 var brokenContentSize;
 
-function style_osm_feature(feature) {
-    alert(0);
-}
-
 var proto;
 
 function loadfeatures(url) {
