@@ -20,7 +20,7 @@ function loadfeatures(url) {
     }
     objmodified = {};
     objdownloaded = {};
-    openSidebar({title: "Features", content: "&nbsp;"});
+    openSidebar({title: "Features", content: "Loading data... <img src='/images/spin.gif'/>"});
     features = new OpenLayers.Layer.Vector("Features", {
         projection: map.displayProjection,
         strategies: [new OpenLayers.Strategy.Fixed()],
@@ -150,19 +150,23 @@ function openchangeset() {
             OpenLayers.Request.POST({url: "/api/0.6/changeset/" + changesetid + "/upload", data: osmchanges, success: function (o) {
                     $("log").innerHTML += (" done<br />Closing the changeset...");
                     OpenLayers.Request.PUT({url: "/api/0.6/changeset/" + changesetid + "/close", success: function (o) {
+                            $("wait").style.display = "none";
                             $("log").innerHTML += (" success!<br />");
                         }, failure: function (o) {
                             uploading = false;
+                            $("wait").style.display = "none";
                             $("log").innerHTML += " failure.";
                         }
                     });
                 }, failure: function (o) {
                     uploading = false;
+                    $("wait").style.display = "none";
                     $("log").innerHTML += " failure.";
                 }
             });
         }, failure: function (o) {
             uploading = false;
+            $("wait").style.display = "none";
             $("log").innerHTML += " failure.";
         }
     });
@@ -176,6 +180,7 @@ function startupload() {
     for(var i in objmodified) {
         q.push(i);
     }
+    $("wait").style.display = "inline";
     getnext(q);
 }
 
@@ -185,7 +190,7 @@ function addfeature(feature) {
     if (feature.data["name"] == null) return;
     var t = $("transtable");
     if (t == null) {
-        openSidebar({title: "Features", content: "<table id='transtable' cellspacing='0'><thead><tr><th>name</th><th>name:be</th><th>name:ru</th></tr></thead><tbody></tbody></table><center><button id='okay'>Okay</button</center><p>Log:</p><p id='log'></p>"}); // TODO: use usefultags
+        openSidebar({title: "Features", content: "<table id='transtable' cellspacing='0'><thead><tr><th>name</th><th>name:be</th><th>name:ru</th></tr></thead><tbody></tbody></table><center><button id='okay'>Okay</button</center><p>Log:</p><p><span id='log'></span><img id='wait' style='display: none;' src='/images/spin.gif'/></p>"}); // TODO: use usefultags
         $("okay").onclick = startupload;
         t = $("transtable");
     } else {
