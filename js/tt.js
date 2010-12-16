@@ -5,13 +5,37 @@ var mapnik;
 var markers;
 var selectControl;
 var popup;
-var cops;
-var features;
+var box = null, boxes;
+var features = null;
 var brokenContentSize;
 
 var proto;
 
 var uploading = false;
+
+var modifiedstyle = {
+    strokeColor: "green",
+    strokeWidth: 3,
+    strokeOpacity: 0.5,
+    fillOpacity: 0.2,
+    fillColor: "green",
+    pointRadius: 6
+};
+
+var selectstyle = {
+    strokeColor: "blue",
+    strokeWidth: 3,
+    strokeOpacity: 0.5,
+    fillOpacity: 0.2,
+    fillColor: "blue",
+    pointRadius: 6
+};
+
+var hidestyle = {
+    strokeColor: "transparent",
+    fillColor: "transparent"
+};
+
 
 function loadfeatures(url) {
     if (uploading) return;
@@ -24,14 +48,7 @@ function loadfeatures(url) {
     features = new OpenLayers.Layer.Vector("Features", {
         projection: map.displayProjection,
         strategies: [new OpenLayers.Strategy.Fixed()],
-        style: {
-            strokeColor: "blue",
-            strokeWidth: 3,
-            strokeOpacity: 0.5,
-            fillOpacity: 0.2,
-            fillColor: "lightblue",
-            pointRadius: 6
-        },
+        style: hidestyle,
         onFeatureInsert: addfeature,
         displayInLayerSwitcher: false,
         protocol: proto = new OpenLayers.Protocol.HTTP({
@@ -54,6 +71,10 @@ var objmodified = {};
 
 var objdownloaded = {};
 
+function highlightfeature(id, style) {
+    features.drawFeature(features.getFeatureByFid(id), style);
+}
+
 function addedit(o) {
     if (uploading) return;
     if (!editing) {
@@ -68,6 +89,7 @@ function addedit(o) {
         o.children[0].style.width = w + "px";
         o.children[0].style.height = h + "px";
         o.children[0].focus();
+        highlightfeature(o.parentNode.id, selectstyle);
     } else {
         removeedit(editing);
         addedit(o);
@@ -86,8 +108,15 @@ function removeedit(o) {
                 objmodified[o.parentNode.id] = {};
             }
             objmodified[o.parentNode.id][id] = s;
+            features.getFeatureByFid(o.parentNode.id).style = modifiedstyle;
+            highlightfeature(o.parentNode.id, modifiedstyle);
         }
         s = stringmap(s, [[/&/g, "&amp;"], [/"/g, "&quot;"], [/'/g, "&#39;"], [/</g, "&lt;"], [/>/g, "&gt;"]]);
+        if (!objmodified[o.parentNode.id]) {
+            highlightfeature(o.parentNode.id, hidestyle);
+        } else {
+            highlightfeature(o.parentNode.id, modifiedstyle);
+        }
         o.innerHTML = s;
         editing = null;
     }
@@ -268,7 +297,9 @@ function init() {
     var date = new Date();
     bel = new OpenLayers.Layer.OSM("Беларуская", "http://tile.latlon.org/tiles/${z}/${x}/${y}.png", {isBaseLayer: true,  type: 'png', displayOutsideMaxExtent: true, transitionEffect: "resize"});
 
-    map.addLayers([mapnik, bel]);
+    boxes  = new OpenLayers.Layer.Boxes("Boxes", {displayInLayerSwitcher: false});
+    
+    map.addLayers([mapnik, bel, boxes]);
     openSidebar({title: "Features", content: "&nbsp;"});
 
     //map.addLayers([osbLayer]);
@@ -287,8 +318,13 @@ function init() {
 
         notice: function (bounds) {
             var ll = map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.left, bounds.bottom)); 
-            ll.transform(map.projection,map.displayProjection);
             var ur = map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.right, bounds.top)); 
+            if (box) {
+                boxes.removeMarker(box);
+                box.destroy();
+            }
+            boxes.addMarker(box = new OpenLayers.Marker.Box(new OpenLayers.Bounds(ll.lon.toFixed(4), ll.lat.toFixed(4), ur.lon.toFixed(4), ur.lat.toFixed(4))));
+            ll.transform(map.projection,map.displayProjection);
             ur.transform(map.projection,map.displayProjection);
             /*alert(ll.lon.toFixed(4) + ", " + 
                   ll.lat.toFixed(4) + ", " + 
