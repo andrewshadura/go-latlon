@@ -77,7 +77,9 @@ function removeedit(o) {
             o.parentNode.style.backgroundColor = "#eaf0f0";
             var id = o.id;
             id = id.replace(/(node|way|relation)\.\d+\./, "");
-            objmodified[o.parentNode.id] = {};
+            if (!objmodified[o.parentNode.id]) {
+                objmodified[o.parentNode.id] = {};
+            }
             objmodified[o.parentNode.id][id] = s;
         }
         s = stringmap(s, [[/&/g, "&amp;"], [/"/g, "&quot;"], [/'/g, "&#39;"], [/</g, "&lt;"], [/>/g, "&gt;"]]);
