@@ -11,7 +11,10 @@ var brokenContentSize;
 
 var proto;
 
+var uploading = false;
+
 function loadfeatures(url) {
+    if (uploading) return;
     if (features) {
         features.destroy();
     }
@@ -52,6 +55,7 @@ var objmodified = {};
 var objdownloaded = {};
 
 function addedit(o) {
+    if (uploading) return;
     if (!editing) {
         var w = o.clientWidth;
         var h = o.clientHeight;
@@ -71,6 +75,7 @@ function addedit(o) {
 }
 
 function removeedit(o) {
+    if (uploading) return;
     if (editing) {
         var s = o.children[0].value;
         if (s != oldvalue) {
@@ -146,15 +151,26 @@ function openchangeset() {
                     $("log").innerHTML += (" done<br />Closing the changeset...");
                     OpenLayers.Request.PUT({url: "/api/0.6/changeset/" + changesetid + "/close", success: function (o) {
                             $("log").innerHTML += (" success!<br />");
+                        }, failure: function (o) {
+                            uploading = false;
+                            $("log").innerHTML += " failure.";
                         }
                     });
+                }, failure: function (o) {
+                    uploading = false;
+                    $("log").innerHTML += " failure.";
                 }
             });
+        }, failure: function (o) {
+            uploading = false;
+            $("log").innerHTML += " failure.";
         }
     });
 }
 
 function startupload() {
+    if (uploading) return;
+    uploading = true;
     osmchanges = OpenLayers.parseXMLString("<osmChange version='0.3' generator='go.latlon.org/tt/'><modify></modify></osmChange>");
     var q = [];
     for(var i in objmodified) {
