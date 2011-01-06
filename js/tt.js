@@ -8,6 +8,7 @@ var popup;
 var box = null, boxes;
 var features = null;
 var brokenContentSize;
+var questionform;
 
 var proto;
 
@@ -39,6 +40,27 @@ var hidestyle = {
 
 function loadfeatures(url) {
     if (uploading) return;
+    if (modified) {
+        questionform.innerHTML = "<div style='width: 300px; height: 100px;'>" +
+         "<p style='text-align: center;'>You have unsaved changes. If you proceed, these changes will be lost</p>" +
+         "<p style='text-align: center;'><button id='cancelbtn'>Cancel</button>" +
+         "<button id='discardbtn'>Discard changes</button></p></div>";
+        questionform.style.display = "block";
+        $("cancelbtn").onclick = function () {
+            questionform.style.display = "none";
+            return false;
+        }
+        $("discardbtn").onclick = function () {
+            questionform.style.display = "none";
+            actuallyloadfeatures(url);
+            return false;
+        }
+        return;
+    }
+    actuallyloadfeatures(url);
+}
+
+function actuallyloadfeatures(url) {
     if (features) {
         features.destroy();
     }
@@ -62,6 +84,7 @@ function loadfeatures(url) {
 var editing = null;
 var oldvalue = null;
 
+var modified = false;
 var objmodified = {};
 
 var objdownloaded = {};
@@ -146,6 +169,7 @@ function removeedit(o) {
             }
             objmodified[o.parentNode.id][id] = s;
             highlightfeature(o.parentNode.id, modifiedstyle);
+            modified = true;
         }
         s = stringmap(s, [[/&/g, "&amp;"], [/"/g, "&quot;"], [/'/g, "&#39;"], [/</g, "&lt;"], [/>/g, "&gt;"]]);
         if (!objmodified[o.parentNode.id]) {
@@ -410,6 +434,12 @@ function init() {
 
     window.onload = handleResize;
     window.onresize = handleResize;
+    
+    questionform = document.createElement("form");
+    questionform.innerHTML = OpenLayers.i18n("Are you sure?");
+    questionform.id = "question";
+    questionform.className = "form attention hidden";
+    document.body.insertBefore(questionform, $("content"));
     
     var sorry = document.createElement("div");
     sorry.innerHTML = OpenLayers.i18n("Ctrl-Drag to select the area to translate.<br />This tool is still a work-in-progress. Please report any bugs you find to the author.");
