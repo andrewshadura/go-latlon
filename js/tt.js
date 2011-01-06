@@ -258,13 +258,18 @@ function startupload() {
     getnext(q);
 }
 
+var maintag = "name";
 var usefultags = ["name", "name:be", "name:ru"];
 
 function addfeature(feature) {
-    if (feature.data["name"] == null) return;
+    if (feature.data[maintag] == null) return;
     var t = $("transtable");
     if (t == null) {
-        openSidebar({title: "Features", content: "<table id='transtable' cellspacing='0'><thead><tr><th>name</th><th>name:be</th><th>name:ru</th></tr></thead><tbody></tbody></table><center><button id='okay'>Okay</button</center><p>Log:</p><p><span id='log'></span><img id='wait' style='display: none;' src='/images/spin.gif'/></p>"}); // TODO: use usefultags
+        var h = "";
+        foreach(usefultags, function (x) {
+            h += ("<th>" + x + "</th>");
+        });
+        openSidebar({title: "Features", content: "<table id='transtable' cellspacing='0'><thead><tr>" + h + "</tr></thead><tbody></tbody></table><center><button id='okay'>Okay</button</center><p>Log:</p><p><span id='log'></span><img id='wait' style='display: none;' src='/images/spin.gif'/></p>"});
         $("okay").onclick = startupload;
         t = $("transtable");
     } else {
