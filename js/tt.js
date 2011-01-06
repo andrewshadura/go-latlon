@@ -73,7 +73,7 @@ var objdownloaded = {};
 
 function highlightfeature(id, style) {
     var feature = features.getFeatureByFid(id);
-    feature.style = modifiedstyle;
+    feature.style = style;
     features.drawFeature(feature, style);
 }
 
