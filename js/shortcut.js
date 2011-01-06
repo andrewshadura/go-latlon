@@ -10,7 +10,6 @@ shortcut = {
 		//Provide a set of default options
 		var default_options = {
 			'type':'keydown',
-			'propagate':false,
 			'disable_in_input':false,
 			'target':document,
 			'keycode':false
@@ -179,9 +178,8 @@ shortcut = {
 						modifiers.shift.pressed == modifiers.shift.wanted &&
 						modifiers.alt.pressed == modifiers.alt.wanted &&
 						modifiers.meta.pressed == modifiers.meta.wanted) {
-				callback(e);
 	
-				if(!opt['propagate']) { //Stop the event
+				if(!callback(e)) { //Stop the event
 					//e.cancelBubble is supported by IE - this will kill the bubbling process.
 					e.cancelBubble = true;
 					e.returnValue = false;
