@@ -1,5 +1,5 @@
 var map;
-var bel;
+var bel, belsn;
 var osb;
 var mapnik;
 var markers;
@@ -298,10 +298,11 @@ function init() {
 
     var date = new Date();
     bel = new OpenLayers.Layer.OSM("Беларуская", "http://tile.latlon.org/tiles/${z}/${x}/${y}.png", {isBaseLayer: true,  type: 'png', displayOutsideMaxExtent: true, transitionEffect: "resize"});
+    belsn = new OpenLayers.Layer.OSM("Беларуская (kosmosnimki)", "http://91.208.39.18/kosmo-be/${z}/${x}/${y}.png", {isBaseLayer: true,  type: 'png', displayOutsideMaxExtent: true, transitionEffect: "resize"});
 
     boxes  = new OpenLayers.Layer.Boxes("Boxes", {displayInLayerSwitcher: false});
     
-    map.addLayers([mapnik, bel, boxes]);
+    map.addLayers([mapnik, bel, belsn, boxes]);
     openSidebar({title: "Features", content: "&nbsp;"});
 
     //map.addLayers([osbLayer]);
