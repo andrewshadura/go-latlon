@@ -75,6 +75,44 @@ function highlightfeature(id, style) {
     features.drawFeature(features.getFeatureByFid(id), style);
 }
 
+function handlekey(key) {
+    switch (key) {
+        case "Escape": {
+            removeedit(editing);
+        } break;
+        case "Up": {
+            if (editing.parentNode.previousElementSibling)
+                addedit(editing.parentNode.previousElementSibling.children[0]);
+        } break;
+        case "Enter":
+        case "Down": {
+            if (editing.parentNode.nextElementSibling)
+                addedit(editing.parentNode.nextElementSibling.children[0]);
+        } break;
+        case "Left": {
+            if (editing && (editing.children[0].selectionEnd == editing.children[0].selectionStart)) {
+                if (editing.children[0].selectionStart == 0) {
+                    if (editing.previousElementSibling)
+                        addedit(editing.previousElementSibling);
+                    return false;
+                }
+            }
+            return true;
+        } break;
+        case "Right": {
+            if (editing && (editing.children[0].selectionEnd == editing.children[0].selectionStart)) {
+                if (editing.children[0].selectionEnd == editing.children[0].textLength) {
+                    if (editing.nextElementSibling)
+                        addedit(editing.nextElementSibling);
+                    return false;
+                }
+            }
+            return true;
+        } break;
+    }
+    return false;
+}
+
 function addedit(o) {
     if (uploading) return;
     if (!editing) {
@@ -94,7 +132,8 @@ function addedit(o) {
     } else {
         if (editing == o) return;
         removeedit(editing);
-        addedit(o);
+        if (o)
+            addedit(o);
     }
 }
 
@@ -365,6 +404,11 @@ function init() {
     }
 
     handleResize();
+    foreach(["Left", "Up", "Down", "Right", "Enter", "Escape"], function (key) {
+        shortcut.add(key, function () {
+            return handlekey(key);
+        });
+    });
 
     window.onload = handleResize;
     window.onresize = handleResize;
