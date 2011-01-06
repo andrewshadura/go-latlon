@@ -89,6 +89,7 @@ function addedit(o) {
         o.children[0].style.width = w + "px";
         o.children[0].style.height = h + "px";
         o.children[0].focus();
+        features.getFeatureByFid(o.parentNode.id).style = selectstyle;
         highlightfeature(o.parentNode.id, selectstyle);
     } else {
         removeedit(editing);
@@ -113,8 +114,10 @@ function removeedit(o) {
         }
         s = stringmap(s, [[/&/g, "&amp;"], [/"/g, "&quot;"], [/'/g, "&#39;"], [/</g, "&lt;"], [/>/g, "&gt;"]]);
         if (!objmodified[o.parentNode.id]) {
+            features.getFeatureByFid(o.parentNode.id).style = hidestyle;
             highlightfeature(o.parentNode.id, hidestyle);
         } else {
+            features.getFeatureByFid(o.parentNode.id).style = modifiedstyle;
             highlightfeature(o.parentNode.id, modifiedstyle);
         }
         o.innerHTML = s;
