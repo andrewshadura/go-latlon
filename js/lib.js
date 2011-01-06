@@ -37,6 +37,24 @@ function stringmap(s, pairs) {
     return s;
 }
 
+function cond(predicate, i, e) {
+    if (predicate) {
+        return i;
+    } else {
+        return e;
+    }
+}
+
+function scond(predicate, i, e) {
+    if (predicate) {
+        if (i) return i;
+        else return "";
+    } else {
+        if (e) return e;
+        else return "";
+    }
+}
+
 function getStyle(element, style) {
     element = $(element);
     style = style == 'float' ? 'cssFloat' : style.camelize();

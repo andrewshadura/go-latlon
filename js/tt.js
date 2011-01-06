@@ -59,11 +59,6 @@ function loadfeatures(url) {
     map.addLayer(features);
 }
 
-function scheck(s) {
-    if (s) return s;
-    return "";
-}
-
 var editing = null;
 var oldvalue = null;
 
@@ -278,7 +273,7 @@ function addfeature(feature) {
     r.id = feature.fid;
     foreach(usefultags, function (n) {
         var e = document.createElement("td");
-        e.appendChild(document.createTextNode(scheck(feature.data[n])));
+        e.appendChild(document.createTextNode(scond(feature.data[n], feature.data[n])));
         e.id = feature.fid + "." + n;
         e.onclick = function () {
             addedit(e);
