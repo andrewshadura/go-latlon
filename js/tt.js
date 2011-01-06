@@ -161,7 +161,7 @@ function removeedit(o) {
     if (editing) {
         var s = o.children[0].value;
         if (s != oldvalue) {
-            o.parentNode.style.backgroundColor = "#eaf0f0";
+            o.parentNode.className = "modifiedrow";
             var id = o.id;
             id = id.replace(/(node|way|relation)\.\d+\./, "");
             if (!objmodified[o.parentNode.id]) {
@@ -243,6 +243,14 @@ function openchangeset() {
                             uploading = false;
                             $("wait").style.display = "none";
                             $("log").innerHTML += (" success!<br />");
+                            var r = $("transtable").rows;
+                            var l = r.length;
+                            var i;
+                            for (i = 1; i < l; i++) {
+                                if ((r[i].className == "modifiedrow") || (r[i].className == "autorow")) {
+                                    r[i].className = "savedrow";
+                                }
+                            }
                         }, failure: function (o) {
                             uploading = false;
                             $("wait").style.display = "none";
@@ -278,15 +286,37 @@ function startupload() {
 var maintag = "name";
 var usefultags = ["name", "name:be", "name:ru"];
 
+function filltags(tag) {
+    removeedit(editing);
+    var r = $("transtable").rows;
+    var l = r.length;
+    var i, id;
+    for (i = 1; i < l; i++) {
+        id = r[i].id;
+        if ($(id + "." + tag).innerHTML == "") {
+            $(id + "." + tag).innerHTML = $(id + "." + maintag).innerHTML;
+            $(id).className = "autorow";
+        }
+    }
+}
+
 function addfeature(feature) {
     if (feature.data[maintag] == null) return;
     var t = $("transtable");
     if (t == null) {
         var h = "";
         foreach(usefultags, function (x) {
-            h += ("<th>" + x + "</th>");
+            h += ("<th>" + cond(x == maintag, x, "<a href='#' id='head." + x +"'>&#8801;</a>" + x) + "</th>");
         });
         openSidebar({title: "Features", content: "<table id='transtable' cellspacing='0'><thead><tr>" + h + "</tr></thead><tbody></tbody></table><center><button id='okay'>Okay</button</center><p>Log:</p><p><span id='log'></span><img id='wait' style='display: none;' src='/images/spin.gif'/></p>"});
+        foreach(usefultags, function (x) {
+            if (x != maintag) {
+                $("head." + x).onclick = function () {
+                    filltags(x);
+                    return false;
+                }
+            }
+        });
         $("okay").onclick = startupload;
         t = $("transtable");
     } else {
