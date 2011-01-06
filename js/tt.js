@@ -92,6 +92,7 @@ function addedit(o) {
         features.getFeatureByFid(o.parentNode.id).style = selectstyle;
         highlightfeature(o.parentNode.id, selectstyle);
     } else {
+        if (editing == o) return;
         removeedit(editing);
         addedit(o);
     }
