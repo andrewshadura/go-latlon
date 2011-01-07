@@ -325,6 +325,12 @@ function startupload() {
 var maintag = "name";
 var usefultags = ["name", "name:be", "name:ru"];
 
+function decodehtml(html) {
+    var e = document.createElement("div");
+    e.innerHTML = "<input value=\""+ html + "\"/>";
+    return e.children[0].value;
+}
+
 function filltags(tag) {
     removeedit(editing);
     var r = $("transtable").rows;
@@ -351,7 +357,8 @@ function filltags(tag) {
             if (!objmodified[id]) {
                 objmodified[id] = {};
             }
-            objmodified[id][tag] = s;
+            objmodified[id][tag] = decodehtml(v);
+            modified = true;
             highlightfeature(id, autostyle);
         }
     }
@@ -406,7 +413,6 @@ function addfeature(feature) {
         }
         i++;
         e.onclick = function (ev) {
-            console.log(ev)
             addedit(e);
         }
         r.appendChild(e);
