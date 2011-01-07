@@ -70,6 +70,8 @@ function loadfeatures(url) {
     actuallyloadfeatures(url);
 }
 
+var actualdata = 0;
+
 function actuallyloadfeatures(url) {
     if (features) {
         features.destroy();
@@ -77,12 +79,22 @@ function actuallyloadfeatures(url) {
     objmodified = {};
     objdownloaded = {};
     modified = false;
+
+    var d = new Date();
+    d = d.getTime();
+    actualdata = d;
     openSidebar({title: "Features", content: "Loading data... <img src='/images/spin.gif'/>"});
+    setTimeout(function () {
+        $("sidebar_content").innerHTML = "Timed out waiting for data to load.";
+    }, 90000);
     features = new OpenLayers.Layer.Vector("Features", {
         projection: map.displayProjection,
         strategies: [new OpenLayers.Strategy.Fixed()],
         style: hidestyle,
-        onFeatureInsert: addfeature,
+        onFeatureInsert: function () {
+            if (actualdata != d) return;
+            addfeature();
+        },
         displayInLayerSwitcher: false,
         protocol: proto = new OpenLayers.Protocol.HTTP({
             url: url,
