@@ -377,7 +377,7 @@ function addfeature(feature) {
     if (t == null) {
         var h = "";
         foreach(usefultags, function (x) {
-            h += ("<th>" + cond(x == maintag, x, "<a href='#' id='head." + x +"'>&#8801;</a>" + x) + "</th>");
+            h += ("<th>" + cond(x == maintag, x, "<a href='#' title='Autofill' id='head." + x +"'>&#8801;</a>" + x) + "</th>");
         });
         openSidebar({title: "Features", content: "<table id='transtable' cellspacing='0'><thead><tr>" + h + "</tr></thead><tbody></tbody></table><center><button id='okay'>Okay</button</center><p>Log:</p><p><span id='log'></span><img id='wait' style='display: none;' src='/images/spin.gif'/></p>"});
         foreach(usefultags, function (x) {
