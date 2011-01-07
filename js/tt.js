@@ -329,6 +329,7 @@ function openchangeset() {
 
 function startupload() {
     if (uploading) return;
+    $("okay").disabled = true;
     uploading = true;
     osmchanges = OpenLayers.parseXMLString("<osmChange version='0.3' generator='go.latlon.org/tt/'><modify></modify></osmChange>");
     var q = [];
