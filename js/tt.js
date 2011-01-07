@@ -101,13 +101,19 @@ function handlekey(key) {
             removeedit(editing);
         } break;
         case "Up": {
-            if (editing.parentNode.previousElementSibling)
-                addedit(editing.parentNode.previousElementSibling.children[0]);
+            if (editing.parentNode.previousElementSibling) {
+                var id = editing.id;
+                id = id.replace(/(node|way|relation)\.\d+\./, "");
+                addedit($(editing.parentNode.previousElementSibling.id + "." + id));
+            }
         } break;
         case "Enter":
         case "Down": {
-            if (editing.parentNode.nextElementSibling)
-                addedit(editing.parentNode.nextElementSibling.children[0]);
+            if (editing.parentNode.nextElementSibling) {
+                var id = editing.id;
+                id = id.replace(/(node|way|relation)\.\d+\./, "");
+                addedit($(editing.parentNode.nextElementSibling.id + "." + id));
+            }
         } break;
         case "Left": {
             if (editing && (editing.children[0].selectionEnd == editing.children[0].selectionStart)) {
