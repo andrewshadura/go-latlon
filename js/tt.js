@@ -23,6 +23,15 @@ var modifiedstyle = {
     pointRadius: 6
 };
 
+var autostyle = {
+    strokeColor: "#b9b900",
+    strokeWidth: 3,
+    strokeOpacity: 0.5,
+    fillOpacity: 0.2,
+    fillColor: "#b9b900",
+    pointRadius: 6
+};
+
 var selectstyle = {
     strokeColor: "blue",
     strokeWidth: 3,
@@ -315,6 +324,7 @@ function filltags(tag) {
                 $(id + "." + tag).innerHTML = v;
             }
             $(id).className = "autorow";
+            highlightfeature(id, autostyle);
         }
     }
 }
