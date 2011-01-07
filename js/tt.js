@@ -290,6 +290,33 @@ function filltags(tag) {
     removeedit(editing);
     var r = $("transtable").rows;
     var l = r.length;
+    var i, id, v;
+    var tm = {};
+    for (i = 1; i < l; i++) {
+        id = r[i].id;
+        v = $(id + "." + maintag).innerHTML;
+        if (!tm[v]) {
+            tm[v] = $(id + "." + tag).innerHTML;
+        }
+    }
+    for (i = 1; i < l; i++) {
+        id = r[i].id;
+        v = $(id + "." + maintag).innerHTML;
+        if ($(id + "." + tag).innerHTML == "") {
+            if (tm[v]) {
+                $(id + "." + tag).innerHTML = tm[v];
+            } else {
+                $(id + "." + tag).innerHTML = v;
+            }
+            $(id).className = "autorow";
+        }
+    }
+}
+
+function dumbfilltags(tag) {
+    removeedit(editing);
+    var r = $("transtable").rows;
+    var l = r.length;
     var i, id;
     for (i = 1; i < l; i++) {
         id = r[i].id;
