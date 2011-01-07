@@ -82,7 +82,7 @@ body {
 }
 
 #transtable * {
-    border: 1px solid;
+    border: 1px solid darkgrey;
     font-size: 8pt;
 }
 
@@ -93,6 +93,10 @@ body {
 
 #transtable a:hover {
     text-decoration: underline;
+}
+
+#tagspopup td * {
+    border: 0;
 }
 
 .olControlLayerSwitcher {
@@ -144,4 +148,19 @@ h3 {
 
 .savedrow {
     background-color: #b0f9b0;
+}
+
+.nodeobj {
+    background: url("/images/node.png") no-repeat;
+    padding-left: 20px;
+}
+
+.wayobj {
+    background: url("/images/way.png") no-repeat;
+    padding-left: 20px;
+}
+
+.relationobj {
+    background: url("/images/relation.png") no-repeat;
+    padding-left: 20px;
 }

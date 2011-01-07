@@ -358,11 +358,17 @@ function addfeature(feature) {
     t = $("transtable").children[1];
     var r = document.createElement("tr");
     r.id = feature.fid;
+    var i = 0;
     foreach(usefultags, function (n) {
         var e = document.createElement("td");
         e.appendChild(document.createTextNode(scond(feature.data[n], feature.data[n])));
         e.id = feature.fid + "." + n;
-        e.onclick = function () {
+        if (i == 0) {
+            e.className = feature.fid.replace(/\.\d+/, "") + "obj";
+        }
+        i++;
+        e.onclick = function (ev) {
+            console.log(ev)
             addedit(e);
         }
         r.appendChild(e);
