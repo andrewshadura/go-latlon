@@ -48,6 +48,7 @@ var hidestyle = {
 
 
 function loadfeatures(url) {
+    removeedit(editing);
     if (uploading) return;
     if (modified) {
         questionform.innerHTML = "<div style='width: 300px; height: 100px;'>" +
@@ -148,6 +149,8 @@ function handlekey(key) {
     return false;
 }
 
+var tagspopup = null;
+
 function addedit(o) {
     if (uploading) return;
     if (!editing) {
@@ -163,6 +166,25 @@ function addedit(o) {
         o.children[0].style.height = h + "px";
         o.children[0].focus();
         highlightfeature(o.parentNode.id, selectstyle);
+        tagspopup = $("tagspopup");
+        var s = "<ul id='tagslist'>", t, f = features.getFeatureByFid(o.parentNode.id).data;
+        for (t in f) {
+            s += ("<li>" + stringmap(t + "=" + f[t], [[/&/g, "&amp;"], [/"/g, "&quot;"], [/'/g, "&#39;"], [/</g, "&lt;"], [/>/g, "&gt;"]]) + "</li>");
+        }
+        s += "</ul>";
+        tagspopup.innerHTML = s;
+        tagspopup.className = "form";
+        tagspopup.style.left = "0px";
+        tagspopup.style.right = "auto";
+        tagspopup.style.height = "";
+        tagspopup.style.height = cond(tagspopup.scrollHeight > 100, 100, (tagspopup.scrollHeight)) + "px";
+        if ((o.parentNode.offsetTop - $("sidebar_content").offsetTop) < ($("sidebar_content").offsetHeight/2)) {
+            tagspopup.style.top = "";
+            tagspopup.style.bottom = "0px";
+        } else {
+            tagspopup.style.top = $("sidebar_title").offsetHeight + "px";
+            tagspopup.style.bottom = "";
+        }
     } else {
         if (editing == o) return;
         removeedit(editing);
@@ -194,6 +216,7 @@ function removeedit(o) {
         }
         o.innerHTML = s;
         editing = null;
+        tagspopup.className = "form hidden";
     }
 }
 
@@ -518,7 +541,12 @@ function init() {
 
     window.onload = handleResize;
     window.onresize = handleResize;
-    
+   
+    tagspopup = document.createElement("div");
+    tagspopup.id = "tagspopup";
+    tagspopup.className = "form hidden";
+    $("sidebar").appendChild(tagspopup);
+
     questionform = document.createElement("form");
     questionform.innerHTML = OpenLayers.i18n("Are you sure?");
     questionform.id = "question";

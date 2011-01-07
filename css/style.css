@@ -67,6 +67,7 @@ body {
     height: 512px; 
     width: 0;
     font-family: sans-serif;
+    position: relative;
 }
 
 #sidebar_close {
@@ -95,8 +96,11 @@ body {
     text-decoration: underline;
 }
 
-#tagspopup td * {
-    border: 0;
+#tagspopup {
+    background-color: white;
+    padding-right: 10pt;
+    overflow: auto;
+    font-size: 8pt;
 }
 
 .olControlLayerSwitcher {
