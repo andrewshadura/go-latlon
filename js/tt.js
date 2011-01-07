@@ -71,6 +71,7 @@ function loadfeatures(url) {
 }
 
 var actualdata = 0;
+var gotsomedata = false;
 
 function actuallyloadfeatures(url) {
     if (features) {
@@ -83,8 +84,10 @@ function actuallyloadfeatures(url) {
     var d = new Date();
     d = d.getTime();
     actualdata = d;
+    gotsomedata = false;
     openSidebar({title: "Features", content: "Loading data... <img src='/images/spin.gif'/>"});
     setTimeout(function () {
+        if (gotsomedata) return;
         $("sidebar_content").innerHTML = "Timed out waiting for data to load.";
     }, 90000);
     features = new OpenLayers.Layer.Vector("Features", {
@@ -93,6 +96,7 @@ function actuallyloadfeatures(url) {
         style: hidestyle,
         onFeatureInsert: function (feature) {
             if (actualdata != d) return;
+            gotsomedata = true;
             addfeature(feature);
         },
         displayInLayerSwitcher: false,
