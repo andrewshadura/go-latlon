@@ -91,9 +91,9 @@ function actuallyloadfeatures(url) {
         projection: map.displayProjection,
         strategies: [new OpenLayers.Strategy.Fixed()],
         style: hidestyle,
-        onFeatureInsert: function () {
+        onFeatureInsert: function (feature) {
             if (actualdata != d) return;
-            addfeature();
+            addfeature(feature);
         },
         displayInLayerSwitcher: false,
         protocol: proto = new OpenLayers.Protocol.HTTP({
