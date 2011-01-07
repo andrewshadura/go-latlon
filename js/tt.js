@@ -76,6 +76,7 @@ function actuallyloadfeatures(url) {
     }
     objmodified = {};
     objdownloaded = {};
+    modified = false;
     openSidebar({title: "Features", content: "Loading data... <img src='/images/spin.gif'/>"});
     features = new OpenLayers.Layer.Vector("Features", {
         projection: map.displayProjection,
