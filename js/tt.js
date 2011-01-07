@@ -289,6 +289,7 @@ function openchangeset() {
                                     r[i].className = "savedrow";
                                 }
                             }
+                            modified = false;
                         }, failure: function (o) {
                             uploading = false;
                             $("wait").style.display = "none";
