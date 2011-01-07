@@ -348,7 +348,6 @@ function filltags(tag) {
                 $(id + "." + tag).innerHTML = v;
             }
             $(id).className = "autorow";
-            o.parentNode.className = "modifiedrow";
             if (!objmodified[id]) {
                 objmodified[id] = {};
             }
