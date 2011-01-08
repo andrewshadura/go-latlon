@@ -382,6 +382,37 @@ function filltags(tag) {
     }
 }
 
+function filltagsknown(tag) {
+    removeedit(editing);
+    var r = $("transtable").rows;
+    var l = r.length;
+    var i, id, v;
+    var tm = {};
+    for (i = 1; i < l; i++) {
+        id = r[i].id;
+        v = $(id + "." + maintag).innerHTML;
+        if (!tm[v]) {
+            tm[v] = $(id + "." + tag).innerHTML;
+        }
+    }
+    for (i = 1; i < l; i++) {
+        id = r[i].id;
+        v = $(id + "." + maintag).innerHTML;
+        if ($(id + "." + tag).innerHTML == "") {
+            if (tm[v]) {
+                $(id + "." + tag).innerHTML = tm[v];
+                $(id).className = "autorow";
+                if (!objmodified[id]) {
+                    objmodified[id] = {};
+                }
+                objmodified[id][tag] = decodehtml(v);
+                modified = true;
+                highlightfeature(id, autostyle);
+            }
+        }
+    }
+}
+
 function dumbfilltags(tag) {
     removeedit(editing);
     var r = $("transtable").rows;
@@ -402,13 +433,18 @@ function addfeature(feature) {
     if (t == null) {
         var h = "";
         foreach(usefultags, function (x) {
-            h += ("<th>" + cond(x == maintag, x, "<a href='#' title='Autofill' id='head." + x +"'>&#8801;</a>" + x) + "</th>");
+            h += ("<th>" + cond(x == maintag, x, "<a href='#' title='Autofill' id='head." + x +"'>&rarr;</a>" +
+                "<a href='#' title='Autofill known' id='head2." + x +"'>&#8801;</a>" + x) + "</th>");
         });
         openSidebar({title: "Features", content: "<table id='transtable' cellspacing='0'><thead><tr>" + h + "</tr></thead><tbody></tbody></table><p style='text-align: center'><button id='okay'>Okay</button</p><p>Log:</p><p><span id='log'></span><img id='wait' style='display: none;' src='/images/spin.gif'/></p>"});
         foreach(usefultags, function (x) {
             if (x != maintag) {
                 $("head." + x).onclick = function () {
                     filltags(x);
+                    return false;
+                }
+                $("head2." + x).onclick = function () {
+                    filltagsknown(x);
                     return false;
                 }
             }
