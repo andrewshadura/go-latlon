@@ -168,3 +168,27 @@ h3 {
     background: url("/images/relation.png") no-repeat;
     padding-left: 20px;
 }
+
+.actionlink {
+    text-decoration: none;
+    border-bottom: 1px dashed;
+    font-size: 7pt;
+}
+
+.actionlink:hover {
+    text-decoration: none;
+    border-bottom: 0;
+    font-size: 7pt;
+}
+
+.maintagli {
+    font-weight: bold;
+}
+
+.tagli {
+    padding: 2px;
+}
+
+.tagli:hover {
+    background: #ccccff;
+}

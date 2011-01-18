@@ -50,7 +50,22 @@ var hidestyle = {
 function loadfeatures(url) {
     removeedit(editing);
     if (uploading) return;
+    if (map.zoom < 16) {
+        questionform.className = "form hidden";
+        questionform.innerHTML = "<div style='width: 300px; height: 100px;'>" +
+         "<p style='text-align: center;'>Please zoom in to be able to select features</p>" +
+         "<p style='text-align: center;'><button id='cancelbtn'>Dismiss</button></p></div>";
+        questionform.style.display = "block";
+        $("cancelbtn").onclick = function () {
+            questionform.style.display = "none";
+            return false;
+        }
+        return;
+    } else {
+        questionform.style.display = "none";
+    }
     if (modified) {
+        questionform.className = "form attention hidden";
         questionform.innerHTML = "<div style='width: 300px; height: 100px;'>" +
          "<p style='text-align: center;'>You have unsaved changes. If you proceed, these changes will be lost</p>" +
          "<p style='text-align: center;'><button id='cancelbtn'>Cancel</button>" +
@@ -167,6 +182,59 @@ function handlekey(key) {
 }
 
 var tagspopup = null;
+
+var tagcombo = null;
+
+function addtagcombo(o, selected, populatecombo, onselect) {
+    if (o.children.length) return;
+    if (tagcombo) removetagcombo(tagcombo);
+    o.innerHTML = "<select id='"+ o.id +"_combo'></select>";
+    var options = populatecombo();
+    for (var i in options) {
+        var y = document.createElement("option");
+        y.value = i;
+        y.text = options[i];
+        y.selected = (selected == i);
+        o.children[0].add(y, null);
+    }
+    o.onblur = function () {
+        removetagcombo(o);
+    }
+    o.children[0].focus();
+    tagcombo = o;
+}
+
+function removetagcombo(o) {
+    if (!o.children.length) return;
+    var s = o.children[0].value;
+    o.innerHTML = stringmap(s, [[/&/g, "&amp;"], [/"/g, "&quot;"], [/'/g, "&#39;"], [/</g, "&lt;"], [/>/g, "&gt;"]]);
+    var id = o.id.replace("tagspan.", "");
+    usefultags[parseInt(id)] = s;
+}
+
+function addtagedit(o, selected, populatecombo, onselect) {
+    if (o.children.length) return;
+    if (tagcombo) removetagcombo(tagcombo);
+    o.innerHTML = "<select id='"+ o.id +"_combo'></select>";
+    var options = populatecombo();
+    for (var i in options) {
+        var y = document.createElement("option");
+        y.value = i;
+        y.text = options[i];
+        y.selected = (selected == i);
+        o.children[0].add(y, null);
+    }
+    o.onblur = function () {
+        removetagcombo(o);
+    }
+    o.children[0].focus();
+    tagcombo = o;
+}
+
+function removetagedit(o) {
+    if (!o.children.length) return;
+    o.innerHTML = stringmap(o.children[0].value, [[/&/g, "&amp;"], [/"/g, "&quot;"], [/'/g, "&#39;"], [/</g, "&lt;"], [/>/g, "&gt;"]]);
+}
 
 function addedit(o) {
     if (uploading) return;
@@ -428,7 +496,7 @@ function dumbfilltags(tag) {
 }
 
 function addfeature(feature) {
-    if (feature.data[maintag] == null) return;
+    /* if (feature.data[maintag] == null) return; */
     var t = $("transtable");
     if (t == null) {
         var h = "";
@@ -535,7 +603,52 @@ function init() {
     boxes  = new OpenLayers.Layer.Boxes("Boxes", {displayInLayerSwitcher: false});
     
     map.addLayers([mapnik, bel, belsn, boxes]);
-    openSidebar({title: "Features", content: "&nbsp;"});
+    {
+        var h = "";
+        var i = 0;
+        foreach(usefultags, function (x) {
+            h += ("<li>" + cond(x == maintag, "<span class='maintagli tagli' id='tagspan."+ i + "'>" + x + "</span> <a class='actionlink hidden' href='#'>Make default</a>", "<span class='tagli' id='tagspan."+ i + "'>" + x + "</span> <a class='actionlink' href='#'>Make default</a>") + "</li>");
+            i++;
+        });
+        openSidebar({title: "Features", content: "<p style='text-align: center;'>Use Ctrl+drag to select the area to download.</p>" +
+            "<p style=''>Tags to edit:</p><ul style='margin-left: 10pt;'>" + h + "</ul>"});
+        var l = i;
+        i = 0;
+        foreach(usefultags, function (x) {
+            var o = $("tagspan." + i);
+            var ll = l;
+            var ii = i;
+            o.parentNode.getElementsByTagName("a")[0].onclick = function () {
+                if (tagcombo) removetagcombo(tagcombo);
+                tagcombo = null;
+                var i;
+                for (i = 0; i < ll; i++) {
+                    var oo = $("tagspan." + i);
+                    oo.parentNode.getElementsByTagName("a")[0].className = (i == ii) ? "actionlink hidden" : "actionlink";
+                    oo.className = (i == ii) ? "maintagli tagli" : "tagli";
+                }
+                maintag = decodehtml(o.innerHTML);
+            }
+            $("tagspan." + i).onclick = function () {
+                addtagcombo(o, x, function () {
+                    var l = {};
+                    foreach(usefultags, function (y) {
+                        l[y] = y;
+                    });
+                    foreach(["name", "name:en", "name:be", 
+                             "name:uk", "name:ru", "name:de",
+                             "name:pl", "name:cz", "name:sk",
+                             "old_name", "int_name", "alt_name"], function (y) {
+                        l[y] = y;
+                    });
+                    return l;
+                }, function () {
+                    alert(x);
+                });
+            }
+            i++;
+        });
+    }
 
     //map.addLayers([osbLayer]);
     //cafes.preFeatureInsert = style_osm_feature; 
@@ -565,10 +678,10 @@ function init() {
                   ll.lat.toFixed(4) + ", " + 
                   ur.lon.toFixed(4) + ", " + 
                   ur.lat.toFixed(4));*/
-            loadfeatures("/api/0.6/map?bbox=" + ll.lon.toFixed(4) + "," + 
-                  ll.lat.toFixed(4) + "," + 
-                  ur.lon.toFixed(4) + "," + 
-                  ur.lat.toFixed(4));
+            loadfeatures("/api/0.6/map?bbox=" + ll.lon.toFixed(7) + "," + 
+                  ll.lat.toFixed(7) + "," + 
+                  ur.lon.toFixed(7) + "," + 
+                  ur.lat.toFixed(7));
         }
     });
     map.addControl(control);
@@ -610,7 +723,7 @@ function init() {
     questionform = document.createElement("form");
     questionform.innerHTML = OpenLayers.i18n("Are you sure?");
     questionform.id = "question";
-    questionform.className = "form attention hidden";
+    questionform.className = "form hidden";
     document.body.insertBefore(questionform, $("content"));
     
     var sorry = document.createElement("div");
