@@ -96,6 +96,11 @@ body {
     text-decoration: underline;
 }
 
+#transtable tbody tr td {
+    height: 20px;
+    min-height: 20px;
+}
+
 #tagspopup {
     background-color: white;
     padding-right: 10pt;
