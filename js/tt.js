@@ -603,6 +603,7 @@ function init() {
     boxes  = new OpenLayers.Layer.Boxes("Boxes", {displayInLayerSwitcher: false});
     
     map.addLayers([mapnik, bel, belsn, boxes]);
+    map.setBaseLayer(bel);
     {
         var h = "";
         var i = 0;
@@ -610,7 +611,7 @@ function init() {
             h += ("<li>" + cond(x == maintag, "<span class='maintagli tagli' id='tagspan."+ i + "'>" + x + "</span> <a class='actionlink hidden' href='#'>Make default</a>", "<span class='tagli' id='tagspan."+ i + "'>" + x + "</span> <a class='actionlink' href='#'>Make default</a>") + "</li>");
             i++;
         });
-        openSidebar({title: "Features", content: "<p style='text-align: center;'>Use Ctrl+drag to select the area to download. Remember that you have to be a registered OpenStreetMap user to save your changes.</p>" +
+        openSidebar({title: "Features", content: "<p style='text-align: center; margin: 5px;'>Use Ctrl+drag to select the area to download. Remember that you have to be a registered OpenStreetMap user to save your changes.</p>" +
             "<p style=''>Tags to edit (click to change):</p><ul style='margin-left: 10pt;'>" + h + "</ul>"});
         var l = i;
         i = 0;
