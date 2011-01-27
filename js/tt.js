@@ -53,8 +53,8 @@ function loadfeatures(url) {
     if (map.zoom < 16) {
         questionform.className = "form hidden";
         questionform.innerHTML = "<div style='width: 300px; height: 100px;'>" +
-         "<p style='text-align: center;'>Please zoom in to be able to select features</p>" +
-         "<p style='text-align: center;'><button id='cancelbtn'>Dismiss</button></p></div>";
+         "<p style='text-align: center;'>" + OpenLayers.i18n("Please zoom in to be able to select features") + "</p>" +
+         "<p style='text-align: center;'><button id='cancelbtn'>" + OpenLayers.i18n("Dismiss") + "</button></p></div>";
         questionform.style.display = "block";
         $("cancelbtn").onclick = function () {
             questionform.style.display = "none";
@@ -67,9 +67,9 @@ function loadfeatures(url) {
     if (modified) {
         questionform.className = "form attention hidden";
         questionform.innerHTML = "<div style='width: 300px; height: 100px;'>" +
-         "<p style='text-align: center;'>You have unsaved changes. If you proceed, these changes will be lost</p>" +
-         "<p style='text-align: center;'><button id='cancelbtn'>Cancel</button>" +
-         "<button id='discardbtn'>Discard changes</button></p></div>";
+         "<p style='text-align: center;'>" + OpenLayers.i18n("You have unsaved changes. If you proceed, these changes will be lost") + "</p>" +
+         "<p style='text-align: center;'><button id='cancelbtn'>" + OpenLayers.i18n("Cancel") + "</button>" +
+         "<button id='discardbtn'>" + OpenLayers.i18n("Discard changes") + "</button></p></div>";
         questionform.style.display = "block";
         $("cancelbtn").onclick = function () {
             questionform.style.display = "none";
@@ -100,10 +100,10 @@ function actuallyloadfeatures(url) {
     d = d.getTime();
     actualdata = d;
     gotsomedata = false;
-    openSidebar({title: "Features", content: "Loading data... <img src='/images/spin.gif'/>"});
+    openSidebar({title: OpenLayers.i18n("Features"), content: OpenLayers.i18n("Loading data") + "... <img src='/images/spin.gif'/>"});
     setTimeout(function () {
         if (gotsomedata) return;
-        $("sidebar_content").innerHTML = "Timed out waiting for data to load.";
+        $("sidebar_content").innerHTML = OpenLayers.i18n("Timed out waiting for data to load.");
     }, 90000);
     features = new OpenLayers.Layer.Vector("Features", {
         projection: map.displayProjection,
@@ -311,7 +311,7 @@ function getnext(a) {
         return;
     }
     var i = a.shift();
-    $("log").innerHTML += ("Downloading " + stringmap(i, [["."," "]]) + "...");
+    $("log").innerHTML += (OpenLayers.i18n("Downloading") + " " + stringmap(i, [["."," "]]) + "...");
     OpenLayers.Request.GET({url: "/api/0.6/" + stringmap(i, [[".","/"]]), params: {}, success: function (o) {
             $("log").innerHTML += "<br />";
             objdownloaded[i] = OpenLayers.parseXMLString(o.responseText);
@@ -351,21 +351,21 @@ var changesetid;
 
 function openchangeset() {
     var changesetreq = "<?xml version='1.0' encoding='UTF-8'?><osm version='0.6' generator='JOSM'><changeset id='0' open='false'><tag k='comment' v='on-line edits' /><tag k='created_by' v='http://go.latlon.org/tt/' /></changeset></osm>";
-    $("log").innerHTML += ("Opening the new changeset...");
+    $("log").innerHTML += (OpenLayers.i18n("Opening the new changeset") + "...");
     OpenLayers.Request.PUT({url: "/api/0.6/changeset/create", data: changesetreq, success: function (o) {
             changesetid = o.responseText;
-            $("log").innerHTML += (" " + changesetid + "<br />Uploading changes...");
+            $("log").innerHTML += (" " + changesetid + "<br />" + OpenLayers.i18n("Uploading changes") + "...");
             var m = osmchanges.documentElement.firstElementChild;
             foreach(m.children, function (e) {
                 e.setAttribute("changeset", changesetid);
                 //e.setAttribute("version", parseInt(e.attributes["version"].value)+1);
             });
             OpenLayers.Request.POST({url: "/api/0.6/changeset/" + changesetid + "/upload", data: osmchanges, success: function (o) {
-                    $("log").innerHTML += (" done<br />Closing the changeset...");
+                    $("log").innerHTML += (" " + OpenLayers.i18n("done") + "<br />" + OpenLayers.i18n("Closing the changeset") + "...");
                     OpenLayers.Request.PUT({url: "/api/0.6/changeset/" + changesetid + "/close", success: function (o) {
                             uploading = false;
                             $("wait").style.display = "none";
-                            $("log").innerHTML += (" success!<br />");
+                            $("log").innerHTML += (" " + OpenLayers.i18n("success") + "!<br />");
                             var r = $("transtable").rows;
                             var l = r.length;
                             var i;
@@ -378,19 +378,19 @@ function openchangeset() {
                         }, failure: function (o) {
                             uploading = false;
                             $("wait").style.display = "none";
-                            $("log").innerHTML += " failure.";
+                            $("log").innerHTML += " " + OpenLayers.i18n("failure") + ".";
                         }
                     });
                 }, failure: function (o) {
                     uploading = false;
                     $("wait").style.display = "none";
-                    $("log").innerHTML += " failure.";
+                    $("log").innerHTML += " " + OpenLayers.i18n("failure") + ".";
                 }
             });
         }, failure: function (o) {
             uploading = false;
             $("wait").style.display = "none";
-            $("log").innerHTML += " failure.";
+            $("log").innerHTML += " " + OpenLayers.i18n("failure") + ".";
         }
     });
 }
@@ -504,7 +504,7 @@ function addfeature(feature) {
             h += ("<th>" + cond(x == maintag, x, "<a href='#' title='Autofill' id='head." + x +"'>&rarr;</a>" +
                 "<a href='#' title='Autofill known' id='head2." + x +"'>&#8801;</a>" + x) + "</th>");
         });
-        openSidebar({title: "Features", content: "<table id='transtable' cellspacing='0'><thead><tr>" + h + "</tr></thead><tbody></tbody></table><p style='text-align: center'><button id='okay'>Okay</button</p><p>Log:</p><p><span id='log'></span><img id='wait' style='display: none;' src='/images/spin.gif'/></p>"});
+        openSidebar({title: OpenLayers.i18n("Features"), content: "<table id='transtable' cellspacing='0'><thead><tr>" + h + "</tr></thead><tbody></tbody></table><p style='text-align: center'><button id='okay'>Okay</button</p><p>" + OpenLayer.i18n("Log") + ":</p><p><span id='log'></span><img id='wait' style='display: none;' src='/images/spin.gif'/></p>"});
         foreach(usefultags, function (x) {
             if (x != maintag) {
                 $("head." + x).onclick = function () {
@@ -608,11 +608,11 @@ function init() {
         var h = "";
         var i = 0;
         foreach(usefultags, function (x) {
-            h += ("<li>" + cond(x == maintag, "<span class='maintagli tagli' id='tagspan."+ i + "'>" + x + "</span> <a class='actionlink hidden' href='#'>Make default</a>", "<span class='tagli' id='tagspan."+ i + "'>" + x + "</span> <a class='actionlink' href='#'>Make default</a>") + "</li>");
+            h += ("<li>" + cond(x == maintag, "<span class='maintagli tagli' id='tagspan."+ i + "'>" + x + "</span> <a class='actionlink hidden' href='#'>" + OpenLayers.i18n("Make default") + "</a>", "<span class='tagli' id='tagspan."+ i + "'>" + x + "</span> <a class='actionlink' href='#'>" + OpenLayers.i18n("Make default") + "</a>") + "</li>");
             i++;
         });
-        openSidebar({title: "Features", content: "<p style='text-align: center; margin: 5px;'>Use Ctrl+drag to select the area to download. Remember that you have to be a registered OpenStreetMap user to save your changes.</p>" +
-            "<p style=''>Tags to edit (click to change):</p><ul style='margin-left: 10pt;'>" + h + "</ul>"});
+        openSidebar({title: OpenLayers.i18n("Features"), content: "<p style='text-align: center; margin: 5px;'>" + OpenLayers.i18n("Use Ctrl+drag to select the area to download. Remember that you have to be a registered OpenStreetMap user to save your changes.") + "</p>" +
+            "<p style=''>" + OpenLayers.i18n("Tags to edit (click to change)") + ":</p><ul style='margin-left: 10pt;'>" + h + "</ul>"});
         var l = i;
         i = 0;
         foreach(usefultags, function (x) {
@@ -735,6 +735,25 @@ function init() {
 
 
 OpenLayers.Lang.ru = OpenLayers.Util.extend(OpenLayers.Lang.ru, {
+    "Please zoom in to be able to select features": "Пожалуйста, приблизьте карту, чтобы начать редактирование",
+    "Dismiss": "Закрыть",
+    "You have unsaved changes. If you proceed, these changes will be lost": "Ваши изменения ещё не сохранены. Если Вы продолжите, они будут утеряны",
+    "Discard changes": "Отменить правки",
+    "Timed out waiting for data to load.": "Таймаут",
+    "Features": "Данные",
+    "Loading data": "Загрузка данных",
+    "Opening the new changeset": "Открытие пакета правок",
+    "Log": "Журнал работы",
+    "Use Ctrl+drag to select the area to download. Remember that you have to be a registered OpenStreetMap user to save your changes.": "Выделите прямоугольную область, зажав Ctrl. Учтите, для сохранения правок необходимо быть зарегистрированным пользователем OpenStreetMap.",
+    "Tags to edit (click to change)": "Теги для редактирования (нажмите, чтобы изменить)",
+    "Are you sure?": "Уверены?",
+    "Downloading": "Загрузка данных",
+    "Uploading changes": "Сохранение данных",
+    "Closing the changeset": "Закрытие пакета правок",
+    "Ctrl-Drag to select the area to translate.<br />This tool is still a work-in-progress. Please report any bugs you find to the author.": "Выделите область с Ctrl.<br />Этот инструмент находится в разработке. Сообщайте об ошибках авторам.",
+    "done": "завершено",
+    "failure": "ошибка",
+    "success": "завершено успешно",
     "Say": "Сообщить",
     "Your message:": "Комментарий",
     "Bump": "Спящий полицейский",
