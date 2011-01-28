@@ -404,6 +404,7 @@ function startupload() {
     for(var i in objmodified) {
         q.push(i);
     }
+    tagspopup.className = "form hidden";
     $("wait").style.display = "inline";
     getnext(q);
 }
