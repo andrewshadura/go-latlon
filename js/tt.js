@@ -497,6 +497,13 @@ function dumbfilltags(tag) {
 
 function addfeature(feature) {
     /* if (feature.data[maintag] == null) return; */
+    var useful = false;
+    for (var i in usefultags) {
+        if (feature.data[usefultags[i]] != null) {
+            useful = true;
+        }
+    }
+    if (!useful) return;
     var t = $("transtable");
     if (t == null) {
         var h = "";
