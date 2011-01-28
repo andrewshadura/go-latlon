@@ -51,14 +51,50 @@ function loadfeatures(url) {
     removeedit(editing);
     if (uploading) return;
     if (map.zoom < 16) {
-        questionform.className = "form hidden";
-        questionform.innerHTML = "<div style='width: 300px; height: 100px;'>" +
-         "<p style='text-align: center;'>" + OpenLayers.i18n("Please zoom in to be able to select features") + "</p>" +
-         "<p style='text-align: center;'><button id='cancelbtn'>" + OpenLayers.i18n("Dismiss") + "</button></p></div>";
-        questionform.style.display = "block";
-        $("cancelbtn").onclick = function () {
-            questionform.style.display = "none";
-            return false;
+        if (map.zoom < 14) {
+            questionform.className = "form hidden";
+            questionform.innerHTML = "<div style='width: 300px; height: 100px;'>" +
+             "<p style='text-align: center;'>" + OpenLayers.i18n("Please zoom in to be able to select features") + "</p>" +
+             "<p style='text-align: center;'><button id='cancelbtn'>" + OpenLayers.i18n("Dismiss") + "</button></p></div>";
+            questionform.style.display = "block";
+            $("cancelbtn").onclick = function () {
+                questionform.style.display = "none";
+                return false;
+            }
+        } else {
+            questionform.className = "form hidden";
+            questionform.innerHTML = "<div style='width: 300px; height: 100px;'>" +
+             "<p style='text-align: center;'>" + OpenLayers.i18n("Please zoom in to be able to select features") + "</p>" +
+             "<p style='text-align: center;'><button id='cancelbtn'>" + OpenLayers.i18n("Dismiss") + "</button>" +
+             "<button id='loadbtn'>" + OpenLayers.i18n("Load anyway") + "</button></p></div>";
+            questionform.style.display = "block";
+            $("cancelbtn").onclick = function () {
+                questionform.style.display = "none";
+                return false;
+            }
+            $("loadbtn").onclick = function () {
+                if (!modified) {
+                    questionform.style.display = "none";
+                    actuallyloadfeatures(url);
+                } else {
+                    questionform.className = "form attention hidden";
+                    questionform.innerHTML = "<div style='width: 300px; height: 100px;'>" +
+                     "<p style='text-align: center;'>" + OpenLayers.i18n("You have unsaved changes. If you proceed, these changes will be lost") + "</p>" +
+                     "<p style='text-align: center;'><button id='cancelbtn'>" + OpenLayers.i18n("Cancel") + "</button>" +
+                     "<button id='discardbtn'>" + OpenLayers.i18n("Discard changes") + "</button></p></div>";
+                    questionform.style.display = "block";
+                    $("cancelbtn").onclick = function () {
+                        questionform.style.display = "none";
+                        return false;
+                    }
+                    $("discardbtn").onclick = function () {
+                        questionform.style.display = "none";
+                        actuallyloadfeatures(url);
+                        return false;
+                    }
+                }
+                return false;
+            }
         }
         return;
     } else {
