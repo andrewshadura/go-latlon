@@ -350,7 +350,7 @@ var osmchanges;
 var changesetid;
 
 function openchangeset() {
-    var changesetreq = "<?xml version='1.0' encoding='UTF-8'?><osm version='0.6' generator='JOSM'><changeset id='0' open='false'><tag k='comment' v='on-line edits' /><tag k='created_by' v='http://go.latlon.org/tt/' /></changeset></osm>";
+    var changesetreq = "<?xml version='1.0' encoding='UTF-8'?><osm version='0.6' generator='JOSM'><changeset id='0' open='false'><tag k='comment' v='on-line edits' /><tag k='created_by' v='http://latlon.org/tt/' /></changeset></osm>";
     $("log").innerHTML += (OpenLayers.i18n("Opening the new changeset") + "...");
     OpenLayers.Request.PUT({url: "/api/0.6/changeset/create", data: changesetreq, success: function (o) {
             changesetid = o.responseText;
@@ -399,7 +399,7 @@ function startupload() {
     if (uploading) return;
     if (!modified) return;
     uploading = true;
-    osmchanges = OpenLayers.parseXMLString("<osmChange version='0.3' generator='go.latlon.org/tt/'><modify></modify></osmChange>");
+    osmchanges = OpenLayers.parseXMLString("<osmChange version='0.3' generator='latlon.org/tt/'><modify></modify></osmChange>");
     var q = [];
     for(var i in objmodified) {
         q.push(i);
@@ -619,7 +619,7 @@ function init() {
             h += ("<li>" + cond(x == maintag, "<span class='maintagli tagli' id='tagspan."+ i + "'>" + x + "</span> <a class='actionlink hidden' href='#'>" + OpenLayers.i18n("Make default") + "</a>", "<span class='tagli' id='tagspan."+ i + "'>" + x + "</span> <a class='actionlink' href='#'>" + OpenLayers.i18n("Make default") + "</a>") + "</li>");
             i++;
         });
-        openSidebar({title: OpenLayers.i18n("Features"), content: "<p style='text-align: center; margin: 5px;'>" + OpenLayers.i18n("Use Ctrl+drag to select the area to download. Remember that you have to be a registered OpenStreetMap user to save your changes.") + "</p>" +
+        openSidebar({title: OpenLayers.i18n("Features"), content: "<p style='text-align: center; margin: 5px;'>" + OpenLayers.i18n("Use Ctrl+drag to select the area to download. Remember that you have to be a <a href='http://www.openstreetmap.org/user/new'>registered</a> OpenStreetMap user to save your changes.") + "</p>" +
             "<p style=''>" + OpenLayers.i18n("Tags to edit (click to change)") + ":</p><ul style='margin-left: 10pt;'>" + h + "</ul>"});
         var l = i;
         i = 0;
@@ -736,7 +736,7 @@ function init() {
     document.body.insertBefore(questionform, $("content"));
     
     var sorry = document.createElement("div");
-    sorry.innerHTML = OpenLayers.i18n("Ctrl-Drag to select the area to translate.<br />This tool is still a work-in-progress. Please report any bugs you find to the author.");
+    sorry.innerHTML = OpenLayers.i18n("Ctrl-Drag to select the area to translate.<br />This tool is still a work-in-progress. Please <a href='https://bitbucket.org/andrew_shadoura/go-latlon/issues/new'>report</a> any bugs you find to the author.");
     sorry.id = "sorry";
     document.body.insertBefore(sorry, $("content"));
 }
@@ -752,13 +752,13 @@ OpenLayers.Lang.ru = OpenLayers.Util.extend(OpenLayers.Lang.ru, {
     "Loading data": "Загрузка данных",
     "Opening the new changeset": "Открытие пакета правок",
     "Log": "Журнал работы",
-    "Use Ctrl+drag to select the area to download. Remember that you have to be a registered OpenStreetMap user to save your changes.": "Выделите прямоугольную область, зажав Ctrl. Учтите, для сохранения правок необходимо быть зарегистрированным пользователем OpenStreetMap.",
+    "Use Ctrl+drag to select the area to download. Remember that you have to be a <a href='http://www.openstreetmap.org/user/new'>registered</a> OpenStreetMap user to save your changes.": "Выделите прямоугольную область, зажав Ctrl. Учтите, для сохранения правок необходимо быть <a href='http://www.openstreetmap.org/user/new'>зарегистрированным</a> пользователем OpenStreetMap.",
     "Tags to edit (click to change)": "Теги для редактирования (нажмите, чтобы изменить)",
     "Are you sure?": "Уверены?",
     "Downloading": "Загрузка данных",
     "Uploading changes": "Сохранение данных",
     "Closing the changeset": "Закрытие пакета правок",
-    "Ctrl-Drag to select the area to translate.<br />This tool is still a work-in-progress. Please report any bugs you find to the author.": "Выделите область с Ctrl.<br />Этот инструмент находится в разработке. Сообщайте об ошибках авторам.",
+    "Ctrl-Drag to select the area to translate.<br />This tool is still a work-in-progress. Please <a href='https://bitbucket.org/andrew_shadoura/go-latlon/issues/new'>report</a> any bugs you find to the author.": "Выделите область с Ctrl.<br />Этот инструмент находится в разработке. <a href='https://bitbucket.org/andrew_shadoura/go-latlon/issues/new'>Сообщайте</a> об ошибках авторам.",
     "done": "завершено",
     "failure": "ошибка",
     "success": "завершено успешно",
