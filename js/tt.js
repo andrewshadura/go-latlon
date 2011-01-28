@@ -504,7 +504,7 @@ function addfeature(feature) {
             h += ("<th>" + cond(x == maintag, x, "<a href='#' title='Autofill' id='head." + x +"'>&rarr;</a>" +
                 "<a href='#' title='Autofill known' id='head2." + x +"'>&#8801;</a>" + x) + "</th>");
         });
-        openSidebar({title: OpenLayers.i18n("Features"), content: "<table id='transtable' cellspacing='0'><thead><tr>" + h + "</tr></thead><tbody></tbody></table><p style='text-align: center'><button id='okay'>Okay</button</p><p>" + OpenLayer.i18n("Log") + ":</p><p><span id='log'></span><img id='wait' style='display: none;' src='/images/spin.gif'/></p>"});
+        openSidebar({title: OpenLayers.i18n("Features"), content: "<table id='transtable' cellspacing='0'><thead><tr>" + h + "</tr></thead><tbody></tbody></table><p style='text-align: center'><button id='okay'>Okay</button</p><p>" + OpenLayers.i18n("Log") + ":</p><p><span id='log'></span><img id='wait' style='display: none;' src='/images/spin.gif'/></p>"});
         foreach(usefultags, function (x) {
             if (x != maintag) {
                 $("head." + x).onclick = function () {
