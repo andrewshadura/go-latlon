@@ -277,7 +277,7 @@ function addedit(o) {
     if (!editing) {
         var w = o.clientWidth;
         var h = o.clientHeight;
-        o.innerHTML = "<input id='"+ o.id +"_edit' type='text' value=\"" + stringmap(o.innerHTML, [[/"/g, "&quot;"]]) + "\" />";
+        o.innerHTML = "<input id='"+ o.id +"_edit' type='text' value=\"" + stringmap(o.innerHTML, [[/"/g, "&quot;"], [/>/g, "&gt;"], [/</g, "&lt;"]]) + "\" />";
         o.onblur = function () {
             removeedit(o);
         }
@@ -450,7 +450,7 @@ var usefultags = ["name", "name:be", "name:ru"];
 
 function decodehtml(html) {
     var e = document.createElement("div");
-    e.innerHTML = "<input value=\""+ html + "\"/>";
+    e.innerHTML = "<input value=\""+ stringmap(html, [[/"/g, "&quot;"], [/>/g, "&gt;"], [/</g, "&lt;"]]) + "\"/>";
     return e.children[0].value;
 }
 
