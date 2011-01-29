@@ -277,7 +277,7 @@ function addedit(o) {
     if (!editing) {
         var w = o.clientWidth;
         var h = o.clientHeight;
-        o.innerHTML = "<input id='"+ o.id +"_edit' type='text' value=\"" + o.innerHTML + "\" />";
+        o.innerHTML = "<input id='"+ o.id +"_edit' type='text' value=\"" + stringmap(o.innerHTML, [[/"/g, "&quot;"]]) + "\" />";
         o.onblur = function () {
             removeedit(o);
         }
